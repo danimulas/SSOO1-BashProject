@@ -55,64 +55,42 @@ configure_game() {
     read -p "Pulse INTRO para continuar..."
 }
 
+    barajar_cartas() {
+    # Definir los palos y los valores
+        palos=("oros" "copas" "espadas" "bastos")
+        valores=("1" "2" "3" "4" "5" "6" "7" "10" "11" "12")
+
+        # Inicializar un array para las cartas
+        cartas=()
+
+        # Generar todas las cartas combinando palos y valores
+        for palo in "${palos[@]}"; do
+            for valor in "${valores[@]}"; do
+                cartas+=("$valor de $palo")
+            done
+        done
+
+        # Barajar el array de cartas en orden aleatorio
+        cartas=($(shuf -e "${cartas[@]}"))
+
+        # Imprimir el array de cartas en orden aleatorio
+        for carta in "${cartas[@]}"; do
+            echo "$carta"
+        done
+
+
+    }
+
+
+
 # Función para jugar una partida de 5illo
 play_game() {
-    # Implementa la lógica del juego aquí
-    barajar_cartas() {
-    palos=("oros" "copas" "espadas" "bastos")
-    valores=("1" "2" "3" "4" "5" "6" "7" "10" "11" "12")
+    barajar_cartas
 
-    for palo in "${palos[@]}"; do
-        for valor in "${valores[@]}"; do
-            cartas+=("$valor de $palo")
-        done
-    done
-
-    cartas=($(shuf -e "${cartas[@]}"))
-    }
-
-# Función para repartir cartas a los jugadores
-    repartir_cartas() {
-        num_cartas=${#cartas[@]}
-        cartas_por_jugador=$((num_cartas / $JUGADORES))
-        jugador=1
-
-        for ((i = 0; i < $JUGADORES; i++)); do
-            for ((j = 0; j < cartas_por_jugador; j++)); do
-                jugadores["$jugador"]+=("${cartas[0]}")
-                unset 'cartas[0]'
-                cartas=("${cartas[@]}")
-            done
-            jugador=$((jugador % $JUGADORES + 1))
-        done
-    }
-
-    # Función para determinar el primer jugador y la carta inicial
-    determinar_primer_jugador() {
-        for jugador in "${!jugadores[@]}"; do
-            if [[ " ${jugadores[$jugador]} " =~ " 5 de oros " ]]; then
-                jugador_inicial=$jugador
-                break
-            fi
-        done
-    }
-
-    # Función para comprobar si una carta se puede jugar
-    puede_jugar_carta() {
-        carta_a_jugar="$1"
-        carta_mesa="$2"
-
-        # Implementa la lógica para verificar si la carta se puede jugar
-        # Aquí debes verificar si la carta es un cinco o sigue una progresión
-        # y si es del mismo palo que la carta en la mesa.
-        # Retorna verdadero si se puede jugar, falso en caso contrario.
-    }
-
-    # Función para cambiar al siguiente jugador
-    siguiente_jugador() {
-        jugador_actual=$((jugador_actual % $JUGADORES + 1))
-    }
+    echo "La partida ha comenzado. ¡Buena suerte!"
+    read -p "Pulse INTRO para continuar..."
 }
+
 
 # Función para mostrar estadísticas
 show_statistics() {
