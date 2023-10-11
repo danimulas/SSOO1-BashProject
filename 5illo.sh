@@ -56,37 +56,70 @@ configure_game() {
 }
 
     barajarCartas() {
-    # Definir los palos y los valores
-        palos=("oros" "copas" "espadas" "bastos")
-        valores=("1" "2" "3" "4" "5" "6" "7" "10" "11" "12")
+    # Inicializar un array para las cartas
+    cartas=()
 
-        # Inicializar un array para las cartas
-        cartas=()
+    # Generar todas las cartas con números del 1 al 40
+    for ((numero=1; numero<=40; numero++)); do
+        cartas+=("$numero")
+    done
 
-        # Generar todas las cartas combinando palos y valores
-        for palo in "${palos[@]}"; do
-            for valor in "${valores[@]}"; do
-                cartas+=("$valor de $palo")
-            done
+    # Barajar el array de cartas en orden aleatorio
+    cartas=($(shuf -e "${cartas[@]}"))
+
+    # Imprimir el array de cartas en orden aleatorio
+    #for carta in "${cartas[@]}"; do
+    #    echo "$carta"
+    #done
+}
+
+repartirCartas() {
+    local cartasPorJugador=$((40 / numJugadores))  # Calcular la cantidad de cartas por jugador
+
+    # Verificar que el número de jugadores sea válido (de 1 a 10)
+    if ((numJugadores < 2 || numJugadores > 4)); then
+        echo "Número de jugadores no válido."
+        return
+    fi
+
+    # Barajar las cartas
+    barajarCartas
+
+    # Repartir las cartas a los jugadores
+    for ((i = 1; i <= numJugadores; i++)); do
+        echo "Cartas para Jugador $i:"
+        for ((j = 1; j <= cartasPorJugador; j++)); do
+            echo -n "Carta $j: "
+            decodificarCarta "${cartas[((i - 1) * cartasPorJugador + j - 1)]}"
         done
+        echo
+    done
+}
 
-        # Barajar el array de cartas en orden aleatorio
-        cartas=($(shuf -e "${cartas[@]}"))
+decodificarCarta() {
+    numero="$1"
 
-        # Imprimir el array de cartas en orden aleatorio
-        for carta in "${cartas[@]}"; do
-            echo "$carta"
-        done
-
-
-    }
+    if ((numero >= 1 && numero <= 10)); then
+        echo "$numero de oros"
+    elif ((numero >= 11 && numero <= 20)); then
+        echo "$((numero - 10)) de copas"
+    elif ((numero >= 21 && numero <= 30)); then
+        echo "$((numero - 20)) de espadas"
+    elif ((numero >= 31 && numero <= 40)); then
+        echo "$((numero - 30)) de bastos"
+    else
+        echo "Número de carta fuera de rango"
+    fi
+}
 
 
 
 # Función para jugar una partida de 5illo
 play_game() {
-    barajarCartas
-
+    numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
+    #barajarCartas
+    #echo "Decodificando cartas:"
+    repartirCartas
     echo "La partida ha comenzado. ¡Buena suerte!"
     read -p "Pulse INTRO para continuar..."
 }
@@ -102,7 +135,6 @@ show_statistics() {
 # Función para mostrar clasificación
 show_leaderboard() {
     # Implementa la lógica para mostrar la clasificación aquí
-    echo "Función para mostrar la clasificación (pendiente de implementar)."
     read -p "Pulse INTRO para continuar..."
 }
 
@@ -113,15 +145,19 @@ while true; do
 
     case $option in
         C|c)
+            clear
             configure_game
             ;;
         J|j)
+            clear
             play_game
             ;;
         E|e)
+            clear
             show_statistics
             ;;
         F|f)
+            clear
             show_leaderboard
             ;;
         S|s)
