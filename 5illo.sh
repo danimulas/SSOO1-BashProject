@@ -85,17 +85,45 @@ repartirCartas() {
     # Barajar las cartas
     barajarCartas
 
+    local cartasRepartidas=()  # Inicializar un array para las cartas repartidas a cada jugador
+
     # Repartir las cartas a los jugadores
     for ((i = 1; i <= numJugadores; i++)); do
-        echo "Cartas para Jugador $i:"
+        cartasPorJugadorActual=()
         for ((j = 1; j <= cartasPorJugador; j++)); do
-            echo -n "Carta $j: "
-            decodificarCarta "${cartas[((i - 1) * cartasPorJugador + j - 1)]}"
+            carta=${cartas[((i - 1) * cartasPorJugador + j - 1)]}
+            cartasPorJugadorActual+=("$carta")
         done
-        echo
+        cartasRepartidas+=("${cartasPorJugadorActual[@]}")
     done
+
+    # Devolver el array de cartas repartidas
+    echo "${cartasRepartidas[@]}"
 }
 
+
+# Funcion para que se juegue con el array creado, y que se vaya eliminando la carta que se ha jugado, la carta
+# que se ha jugado se añade a un nuevo array denominado mesa y se va eliminando del array de cartas de cada jugador
+# un jugador solo puede echar una carta si es 5, 15, 25 o 35, si no es así, puede echar una carta que sea inmediatamente
+# superior o inferior a la que está en la mesa, si no tiene ninguna carta que cumpla esta condición, se le pasa el turno
+# el orden del juego es el siguiente: jugador con carta 5, jugador siguiente, jugador siguiente, jugador siguiente, jugador siguiente...
+
+jugar(){
+    local cartasPorJugador=$((40 / numJugadores))
+    cartasRepartidas=($(repartirCartas))
+    for ((i = 0; i < ${#cartasRepartidas[@]}; i++)); do
+        if [[ ${cartasRepartidas[i]} == "5" ]]; then
+            jugador=$((i / cartasPorJugador + 1))
+            echo "El jugador que tiene la carta número 5 y debe sacar es el Jugador $jugador."
+            return
+        fi
+    done
+    echo "Ningún jugador tiene la carta número 5."
+
+    # El jugador con la carta número 5 es el primero en jugar, entonces pone la carta en la mesa y se elimina del array de cartas del jugador
+
+
+}
 decodificarCarta() {
     numero="$1"
 
@@ -119,8 +147,7 @@ play_game() {
     numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
     #barajarCartas
     #echo "Decodificando cartas:"
-    repartirCartas
-    echo "La partida ha comenzado. ¡Buena suerte!"
+    determinarJugadorConCartaNumero5
     read -p "Pulse INTRO para continuar..."
 }
 
