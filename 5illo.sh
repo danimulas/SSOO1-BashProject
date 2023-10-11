@@ -55,7 +55,7 @@ configure_game() {
     read -p "Pulse INTRO para continuar..."
 }
 
-    barajarCartas() {
+barajarCartas() {
     # Inicializar un array para las cartas
     cartas=()
 
@@ -67,40 +67,50 @@ configure_game() {
     # Barajar el array de cartas en orden aleatorio
     cartas=($(shuf -e "${cartas[@]}"))
 
-    # Imprimir el array de cartas en orden aleatorio
+     #Imprimir el array de cartas en orden aleatorio
     #for carta in "${cartas[@]}"; do
     #    echo "$carta"
     #done
 }
 
 repartirCartas() {
-    local cartasPorJugador=$((40 / numJugadores))  # Calcular la cantidad de cartas por jugador
-
-    # Verificar que el número de jugadores sea válido (de 1 a 10)
+    # Verificar que el número de jugadores sea válido (de 2 a 4)
     if ((numJugadores < 2 || numJugadores > 4)); then
         echo "Número de jugadores no válido."
         return
     fi
 
+    local cartasPorJugador=$((40 / numJugadores))  # Calcular la cantidad de cartas por jugador
+
     # Barajar las cartas
     barajarCartas
 
-    local cartasRepartidas=()  # Inicializar un array para las cartas repartidas a cada jugador
-
-    # Repartir las cartas a los jugadores
+    cartasJugadores=()
     for ((i = 1; i <= numJugadores; i++)); do
-        cartasPorJugadorActual=()
+        cartasJugadorActual=()
         for ((j = 1; j <= cartasPorJugador; j++)); do
             carta=${cartas[((i - 1) * cartasPorJugador + j - 1)]}
-            cartasPorJugadorActual+=("$carta")
+            cartasJugadorActual[i]+="$carta "
+            tamano=${#cartasJugadorActual[$i]}]
         done
-        cartasRepartidas+=("${cartasPorJugadorActual[@]}")
+        cartasJugadores+=("${cartasJugadorActual[@]}")
     done
-
-    # Devolver el array de cartas repartidas
-    echo "${cartasRepartidas[@]}"
+    
+    # Imprimir las cartas de cada jugador
+    for ((i=0; i<numJugadores; i++)); do
+        echo "Cartas del Jugador $((i+1)): ${cartasJugadores[$i]}"
+    done
 }
 
+# Función para imprimir las cartas de cada jugador
+imprimirCartasJugadores() {
+    for ((i = 0; i < numJugadores; i++)); do
+        echo "Cartas del Jugador $((i+1)):"
+        for carta in "${cartasJugadores[i]}"; do
+            echo "$carta"
+        done
+    done
+}
 
 # Funcion para que se juegue con el array creado, y que se vaya eliminando la carta que se ha jugado, la carta
 # que se ha jugado se añade a un nuevo array denominado mesa y se va eliminando del array de cartas de cada jugador
@@ -109,17 +119,9 @@ repartirCartas() {
 # el orden del juego es el siguiente: jugador con carta 5, jugador siguiente, jugador siguiente, jugador siguiente, jugador siguiente...
 
 jugar(){
-    local cartasPorJugador=$((40 / numJugadores))
-    cartasRepartidas=($(repartirCartas))
-    for ((i = 0; i < ${#cartasRepartidas[@]}; i++)); do
-        if [[ ${cartasRepartidas[i]} == "5" ]]; then
-            jugador=$((i / cartasPorJugador + 1))
-            echo "El jugador que tiene la carta número 5 y debe sacar es el Jugador $jugador."
-            return
-        fi
-    done
-    echo "Ningún jugador tiene la carta número 5."
-
+    #local cartasPorJugador=$((40 / numJugadores))
+    repartirCartas
+    #imprimirCartasJugadores
     # El jugador con la carta número 5 es el primero en jugar, entonces pone la carta en la mesa y se elimina del array de cartas del jugador
 
 
@@ -147,7 +149,7 @@ play_game() {
     numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
     #barajarCartas
     #echo "Decodificando cartas:"
-    determinarJugadorConCartaNumero5
+    jugar
     read -p "Pulse INTRO para continuar..."
 }
 
