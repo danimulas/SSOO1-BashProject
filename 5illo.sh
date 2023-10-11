@@ -3,13 +3,12 @@
 # Comprobar si se proporciona el argumento -g
 if [ "$1" == "-g" ]; then 
     # Mostrar datos del grupo y estrategias
-    echo "Datos del grupo:"
-    echo "Grupo: [Nombre del grupo]"
-    echo "Miembros: [Nombres de los miembros]"
-    
-    echo "Estrategias de juego implementadas:"
-    echo "1. Estrategia 1: [Descripción de la estrategia 1]"
-    echo "2. Estrategia 2: [Descripción de la estrategia 2]"
+    echo "COMPONENTES DEL GRUPO"
+    echo "[Mario Prieta Sánchez 49839758T]"
+    echo "[Daniel Mulas Fajardo 70961169M]"
+    echo "ESTRATEGIAS IMPLEMENTADAS"
+    echo "Estrategia 1: [Descripción de la estrategia 1]"
+    echo "Estrategia 2: [Descripción de la estrategia 2]"
     
     exit
 fi
@@ -17,13 +16,12 @@ fi
 # Función para mostrar el menú principal
 show_menu() {
     clear
-    echo "5illo - Juego de naipes Cinquillo"
-    echo "C) CONFIGURACIÓN"
-    echo "J) JUGAR"
-    echo "E) ESTADÍSTICAS"
-    echo "F) CLASIFICACIÓN"
-    echo "S) SALIR"
-    echo "Introduzca una opción >>"
+    echo "C)CONFIGURACION
+J)JUGAR
+E)ESTADISTICAS
+F)CLASIFICACION
+S)SALIR
+“5illo”. Introduzca una opción >>"
 }
 
 # Función para cambiar la configuración
@@ -47,10 +45,14 @@ configure_game() {
         read -p "Ruta no válida. Por favor, introduzca una ruta válida para el archivo de log: " log
     done
 
+    
     # Actualizar configuración
     echo "JUGADORES=$jugadores" > config.cfg
     echo "ESTRATEGIA=$estrategia" >> config.cfg
     echo "LOG=$log" >> config.cfg
+
+    echo -e "\nCONFIGURACIÓN ACTUALIZADA CORRECTAMENTE"
+    read -p "Pulse INTRO para continuar..."
 }
 
 # Función para jugar una partida de 5illo
