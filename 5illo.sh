@@ -55,7 +55,7 @@ configure_game() {
     read -p "Pulse INTRO para continuar..."
 }
 
-    barajar_cartas() {
+    barajarCartas() {
     # Definir los palos y los valores
         palos=("oros" "copas" "espadas" "bastos")
         valores=("1" "2" "3" "4" "5" "6" "7" "10" "11" "12")
@@ -85,7 +85,7 @@ configure_game() {
 
 # Función para jugar una partida de 5illo
 play_game() {
-    barajar_cartas
+    barajarCartas
 
     echo "La partida ha comenzado. ¡Buena suerte!"
     read -p "Pulse INTRO para continuar..."
