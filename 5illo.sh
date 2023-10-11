@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Comprobar si se proporciona el argumento -g
-if [ "$1" == "-g" ]; then
+if [ "$1" == "-g" ]; then 
     # Mostrar datos del grupo y estrategias
     echo "Datos del grupo:"
     echo "Grupo: [Nombre del grupo]"
