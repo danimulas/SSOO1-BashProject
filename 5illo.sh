@@ -94,11 +94,9 @@ repartirCartas() {
             cartasJugadorActual+="$carta "
         done
         cartasJugadores+=("${cartasJugadorActual[@]}")
-    done
-
-    # Imprimir las cartas de cada jugador
-
+    done    
 }
+
 
 imprimirCartas(){
     for ((i=0; i<numJugadores; i++)); do
@@ -106,35 +104,18 @@ imprimirCartas(){
     done
 }
 
-#Funcion para elegir la persona con el carta numero "5 " y eliminar esta carta de su mano
-eliminarCarta() {
-    # Carta a eliminar
-    cartaAEliminar="5 "
-
-    # Iterar a través de las manos de los jugadores
-    for ((i = 0; i < numJugadores; i++)); do
-        mano=(${cartasJugadores[i]})
-        nuevaMano=()
-
-        # Iterar a través de las cartas en la mano del jugador actual
-        for carta in "${mano[@]}"; do
-            if [[ $carta != $cartaAEliminar ]]; then
-                nuevaMano+=("$carta")
-            fi
-        done
-
-        # Actualizar la mano del jugador sin la carta eliminada
-        cartasJugadores[i]="${nuevaMano[@]}"
+eliminarCarta(){
+    for ((i = 0; i < ${#cartasJugadores[@]}; i++)); do
+    # Usa awk para eliminar el número especificado en cada elemento y reemplazarlo en el arreglo
+        cartasJugadores[$i]=$(echo "${cartasJugadores[$i]}" | awk -v numero="$numeroEliminar" '{gsub(" "numero" ", " "); print}')
     done
 }
-
-
-
 
 # Función para jugar una partida de 5illo
 jugar(){
     repartirCartas
     imprimirCartas
+    numeroEliminar="6"
     eliminarCarta
     imprimirCartas
 }
