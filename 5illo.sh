@@ -20,8 +20,8 @@ show_menu() {
 J)JUGAR
 E)ESTADISTICAS
 F)CLASIFICACION
-S)SALIR
-“5illo”. Introduzca una opción >>"
+S)SALIR"
+    echo "Introduzca una opción >>"
 }
 
 # Función para cambiar la configuración
@@ -44,7 +44,6 @@ configure_game() {
     while [[ ! -d $(dirname $log) ]]; do
         read -p "Ruta no válida. Por favor, introduzca una ruta válida para el archivo de log: " log
     done
-
     
     # Actualizar configuración
     echo "JUGADORES=$jugadores" > config.cfg
@@ -55,6 +54,7 @@ configure_game() {
     read -p "Pulse INTRO para continuar..."
 }
 
+# Función para barajar las cartas
 barajarCartas() {
     # Inicializar un array para las cartas
     cartas=()
@@ -66,66 +66,80 @@ barajarCartas() {
 
     # Barajar el array de cartas en orden aleatorio
     cartas=($(shuf -e "${cartas[@]}"))
-
-     #Imprimir el array de cartas en orden aleatorio
-    #for carta in "${cartas[@]}"; do
-    #    echo "$carta"
-    #done
 }
 
+# Función para repartir cartas a los jugadores
 repartirCartas() {
+    # Obtener el número de jugadores desde la configuración
+    numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
+
     # Verificar que el número de jugadores sea válido (de 2 a 4)
     if ((numJugadores < 2 || numJugadores > 4)); then
         echo "Número de jugadores no válido."
         return
     fi
 
-    local cartasPorJugador=$((40 / numJugadores))  # Calcular la cantidad de cartas por jugador
+    # Calcular la cantidad de cartas por jugador
+    local cartasPorJugador=$((40 / numJugadores))
 
     # Barajar las cartas
     barajarCartas
 
     cartasJugadores=()
+
     for ((i = 1; i <= numJugadores; i++)); do
         cartasJugadorActual=()
         for ((j = 1; j <= cartasPorJugador; j++)); do
             carta=${cartas[((i - 1) * cartasPorJugador + j - 1)]}
-            cartasJugadorActual[i]+="$carta "
-            tamano=${#cartasJugadorActual[$i]}]
+            cartasJugadorActual+="$carta "
         done
         cartasJugadores+=("${cartasJugadorActual[@]}")
     done
-    
+
     # Imprimir las cartas de cada jugador
+
+}
+
+imprimirCartas(){
     for ((i=0; i<numJugadores; i++)); do
         echo "Cartas del Jugador $((i+1)): ${cartasJugadores[$i]}"
     done
 }
 
-# Función para imprimir las cartas de cada jugador
-imprimirCartasJugadores() {
+#Funcion para elegir la persona con el carta numero "5 " y eliminar esta carta de su mano
+eliminarCarta() {
+    # Carta a eliminar
+    cartaAEliminar="5 "
+
+    # Iterar a través de las manos de los jugadores
     for ((i = 0; i < numJugadores; i++)); do
-        echo "Cartas del Jugador $((i+1)):"
-        for carta in "${cartasJugadores[i]}"; do
-            echo "$carta"
+        mano=(${cartasJugadores[i]})
+        nuevaMano=()
+
+        # Iterar a través de las cartas en la mano del jugador actual
+        for carta in "${mano[@]}"; do
+            if [[ $carta != $cartaAEliminar ]]; then
+                nuevaMano+=("$carta")
+            fi
         done
+
+        # Actualizar la mano del jugador sin la carta eliminada
+        cartasJugadores[i]="${nuevaMano[@]}"
     done
 }
 
-# Funcion para que se juegue con el array creado, y que se vaya eliminando la carta que se ha jugado, la carta
-# que se ha jugado se añade a un nuevo array denominado mesa y se va eliminando del array de cartas de cada jugador
-# un jugador solo puede echar una carta si es 5, 15, 25 o 35, si no es así, puede echar una carta que sea inmediatamente
-# superior o inferior a la que está en la mesa, si no tiene ninguna carta que cumpla esta condición, se le pasa el turno
-# el orden del juego es el siguiente: jugador con carta 5, jugador siguiente, jugador siguiente, jugador siguiente, jugador siguiente...
 
+
+
+# Función para jugar una partida de 5illo
 jugar(){
-    #local cartasPorJugador=$((40 / numJugadores))
     repartirCartas
-    #imprimirCartasJugadores
-    # El jugador con la carta número 5 es el primero en jugar, entonces pone la carta en la mesa y se elimina del array de cartas del jugador
-
-
+    imprimirCartas
+    eliminarCarta
+    imprimirCartas
 }
+
+# Función para decodificar el número de carta en palo
 decodificarCarta() {
     numero="$1"
 
@@ -142,17 +156,13 @@ decodificarCarta() {
     fi
 }
 
-
-
 # Función para jugar una partida de 5illo
 play_game() {
     numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
-    #barajarCartas
-    #echo "Decodificando cartas:"
+    echo "Comenzando una partida de 5illo con $numJugadores jugadores..."
     jugar
     read -p "Pulse INTRO para continuar..."
 }
-
 
 # Función para mostrar estadísticas
 show_statistics() {
@@ -164,10 +174,11 @@ show_statistics() {
 # Función para mostrar clasificación
 show_leaderboard() {
     # Implementa la lógica para mostrar la clasificación aquí
+    echo "Función para mostrar la clasificación (pendiente de implementar)."
     read -p "Pulse INTRO para continuar..."
 }
 
-# Main loop
+# Bucle principal
 while true; do
     show_menu
     read option
