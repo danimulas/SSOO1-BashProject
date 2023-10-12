@@ -70,14 +70,7 @@ barajarCartas() {
 
 # Función para repartir cartas a los jugadores
 repartirCartas() {
-    # Obtener el número de jugadores desde la configuración
-    numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
 
-    # Verificar que el número de jugadores sea válido (de 2 a 4)
-    if ((numJugadores < 2 || numJugadores > 4)); then
-        echo "Número de jugadores no válido."
-        return
-    fi
 
     # Calcular la cantidad de cartas por jugador
     local cartasPorJugador=$((40 / numJugadores))
@@ -86,6 +79,11 @@ repartirCartas() {
     barajarCartas
 
     cartasJugadores=()
+
+    mesaOros=()
+    mesaCopas=()
+    mesaEspadas=()
+    mesaBastos=()
 
     for ((i = 1; i <= numJugadores; i++)); do
         cartasJugadorActual=()
@@ -102,20 +100,46 @@ imprimirCartas(){
     for ((i=0; i<numJugadores; i++)); do
         echo "Cartas del Jugador $((i+1)): ${cartasJugadores[$i]}"
     done
+
+    echo "Mesa Oros: ${mesaOros[*]}"
+    echo "Mesa Copas: ${mesaCopas[*]}"
+    echo "Mesa Espadas: ${mesaEspadas[*]}"
+    echo "Mesa Bastos: ${mesaBastos[*]}"
 }
 
-eliminarCarta(){
+eliminarCarta() {
     for ((i = 0; i < ${#cartasJugadores[@]}; i++)); do
-    # Usa awk para eliminar el número especificado en cada elemento y reemplazarlo en el arreglo
-        cartasJugadores[$i]=$(echo "${cartasJugadores[$i]}" | awk -v numero="$numeroEliminar" '{gsub(" "numero" ", " "); print}')
+        # Usa awk para eliminar el número especificado en cada elemento y reemplazarlo en el arreglo
+        cartasJugadores[$i]=$(echo "${cartasJugadores[$i]}" | awk -v numeroEliminar="$numeroEliminar" '{gsub(" "numeroEliminar" ", " "); print}')
+        # Añade la carta eliminada a la mesa correspondiente
     done
+
+    if ((numeroEliminar >= 1 && numeroEliminar <= 10)); then
+        mesaOros+=("$numeroEliminar")
+    elif ((numeroEliminar >= 11 && numeroEliminar <= 20)); then
+        mesaCopas+=("$numeroEliminar")
+    elif ((numeroEliminar >= 21 && numeroEliminar <= 30)); then
+        mesaEspadas+=("$numeroEliminar")
+    elif ((numeroEliminar >= 31 && numeroEliminar <= 40)); then
+        mesaBastos+=("$numeroEliminar")
+    fi
+
+    mesaOros=($(printf "%s\n" "${mesaOros[@]}" | sort -n))
+    mesaCopas=($(printf "%s\n" "${mesaCopas[@]}" | sort -n))
+    mesaEspadas=($(printf "%s\n" "${mesaEspadas[@]}" | sort -n))
+    mesaBastos=($(printf "%s\n" "${mesaBastos[@]}" | sort -n))
+
 }
 
-# Función para jugar una partida de 5illo
+
 jugar(){
     repartirCartas
     imprimirCartas
-    numeroEliminar="6"
+    #ESTO HAY QUE CAMBIARLO, EL NUMERO HA ELIMINAR TENDRÍA QUE ESTABLECERSE DENTRO DE LA FUNCION QUE CALCULE QUIEN TIENE TURNO
+    numeroEliminar="5"
+    eliminarCarta
+    imprimirCartas
+    numeroEliminar="4"
     eliminarCarta
     imprimirCartas
 }
