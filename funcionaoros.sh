@@ -60,7 +60,7 @@ barajarCartas() {
     cartas=()
 
     # Generar todas las cartas con números del 1 al 40
-    for ((numero=1; numero<=20; numero++)); do
+    for ((numero=1; numero<=40; numero++)); do
         cartas+=("$numero")
     done
 
@@ -73,7 +73,7 @@ repartirCartas() {
 
 
     # Calcular la cantidad de cartas por jugador
-    local cartasPorJugador=$((20 / numJugadores))
+    local cartasPorJugador=$((40 / numJugadores))
 
     # Barajar las cartas
     barajarCartas
