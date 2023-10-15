@@ -16,7 +16,16 @@ fi
 # Función para mostrar el menú principal
 show_menu() {
     clear
-    echo "C)CONFIGURACION
+    echo "                                                       
+ _____ _ _ _       
+|  ___(_) | |      
+|___ \ _| | | ___  
+    \ \ | | |/ _ \ 
+/\__/ / | | | (_) |
+\____/|_|_|_|\___/ 
+                   
+
+C)CONFIGURACION
 J)JUGAR
 E)ESTADISTICAS
 F)CLASIFICACION
@@ -113,15 +122,22 @@ imprimirCartas(){
     for ((i=0; i<numJugadores; i++)); do
         echo "Cartas del Jugador $((i+1)): ${cartasJugadores[$i]}"
     done
+    echo "--------------------------------------------------"
+    echo "Mesa Oros: ${mesaOros[*]}"
+    echo "Mesa Copas: ${mesaCopas[*]}"
+    echo "Mesa Espadas: ${mesaEspadas[*]}"
+    echo "Mesa Bastos: ${mesaBastos[*]}"
+    echo "--------------------------------------------------"
 }
 
 eliminarCarta() {
     for ((i = 0; i < ${#cartasJugadores[@]}; i++)); do
         cartasJugadores[$i]=$(echo "${cartasJugadores[$i]}" | awk -v numeroEliminar="$numeroEliminar" '{gsub(" "numeroEliminar" ", " "); print}')
     done
-    echo "Carta eliminada: $(decodificarCarta "$numeroEliminar")"
-    #imprimir cartas tras eliminar
     imprimirCartas
+    echo -e "El jugador $jugadorTurno ha jugado la carta $(decodificarCarta $numeroEliminar)\n"
+    #imprimir cartas tras eliminar
+    
     if ((numeroEliminar >= 1 && numeroEliminar <= 10)); then
         mesaOros+=("$numeroEliminar")
     elif ((numeroEliminar >= 11 && numeroEliminar <= 20)); then
@@ -140,7 +156,6 @@ eliminarCarta() {
 
 turno() {
     numeroEliminar=5
-    pEliminar=false
     jugar=true
     for ((i = 0; i < ${#cartasJugadores[@]}; i++)); do
         cartasJugador=${cartasJugadores[$i]}
@@ -187,6 +202,7 @@ find_max() {
 
 
 bucle_jugabilidad() {
+    clear
     echo "Turno del jugador $jugadorTurno"
     # Obtener las cartas del jugador actual
     cartasJugadorActual=${cartasJugadores[$((jugadorTurno-1))]}  
@@ -196,24 +212,13 @@ bucle_jugabilidad() {
 
     # Convertir las cartas en un array
     IFS=' ' read -ra cartasNumeros <<< "$cartasJugadorActual"
-    echo "Cartas del jugador $jugadorTurno: $cartasJugadorActual"
-
-    # Obtener los valores mínimos y máximos de las mesas
+    #imprimirCartas
     
 
 
     carta_valida=false
 
     maxminmesas
-    #Imprime los maximos y minimos de las mesas
-    echo "Maximo mesa oros: $max_mesaOros"
-    echo "Minimo mesa oros: $min_mesaOros"
-    echo "Maximo mesa copas: $max_mesaCopas"
-    echo "Minimo mesa copas: $min_mesaCopas"
-    echo "Maximo mesa espadas: $max_mesaEspadas"
-    echo "Minimo mesa espadas: $min_mesaEspadas"
-    echo "Maximo mesa bastos: $max_mesaBastos"
-    echo "Minimo mesa bastos: $min_mesaBastos"
 
     if [ "$jugadorTurno" -eq "1" ]; then
         jugar_manual
@@ -224,8 +229,7 @@ bucle_jugabilidad() {
 
     if $carta_valida; then
         eliminarCarta
-        #clear
-        imprimirCartasIntro
+        #imprimirCartasIntro
          # Comprobar si el jugador se ha quedado sin cartas
         if [ "${cartasJugadores[$((jugadorTurno-1))]}" == " " ]; then
             echo "EL JUGADOR $jugadorTurno HA GANADO LA PARTIDA!!"
@@ -245,6 +249,8 @@ bucle_jugabilidad() {
 
 jugar_manual(){
     # Elegir el número de la carta que deseas jugar, si no deseas jugar ninguna carta, introduce -1
+
+    imprimirCartas
 
     posibilidad=false
 
@@ -288,6 +294,7 @@ jugar_manual(){
         done
 
         if [ "$carta_valida" = true ]; then
+            clear
             break  # Carta válida, salimos del bucle while
         else
             echo "La carta seleccionada no es válida. Por favor, elige una carta válida."
@@ -303,35 +310,30 @@ decidirCarta(){
             
             if [ "$carta" -eq 15 ]; then
                 mesacopas=true
-                echo "El jugador $jugadorTurno puede jugar la carta $carta."
                 numeroEliminar="$carta"
                 carta_valida=true
                 break
             fi
 
             if [ "$carta" -eq 25 ]; then
-                echo "El jugador $jugadorTurno puede jugar la carta $carta."
                 numeroEliminar="$carta"
                 carta_valida=true
                 break
             fi
 
             if [ "$carta" -eq 35 ]; then
-            echo "El jugador $jugadorTurno puede jugar la carta $carta."
                 numeroEliminar="$carta"
                 carta_valida=true
                 break
             fi
 
             if ( [ "$carta" -le 10 ] && [ "$carta" -eq "$((max_mesaOros + 1))" ] )|| [ "$carta" -eq "$((min_mesaOros - 1))" ] ; then
-                echo "El jugador $jugadorTurno puede jugar la carta $carta."
                 numeroEliminar="$carta"
                 carta_valida=true
                 break
             fi
             if [ "$carta" -eq "$((min_mesaCopas - 1))" ] || [ "$carta" -eq "$((max_mesaCopas + 1))" ]; then
                 if [ "$carta" -ge 11 ] && [ "$carta" -le 20 ]; then
-                    echo "El jugador $jugadorTurno puede jugar la carta $carta."
                     numeroEliminar="$carta"
                     carta_valida=true
                     break
@@ -339,7 +341,6 @@ decidirCarta(){
             fi
             if [ "$carta" -eq "$((min_mesaEspadas - 1))" ] || [ "$carta" -eq "$((max_mesaEspadas + 1))" ]; then
                 if [ "$carta" -ge 21 ] && [ "$carta" -le 30 ]; then
-                    echo "El jugador $jugadorTurno puede jugar la carta $carta."
                     numeroEliminar="$carta"
                     carta_valida=true
                     break
@@ -347,7 +348,6 @@ decidirCarta(){
             fi
             if [ "$carta" -eq "$((min_mesaBastos - 1))" ] || [ "$carta" -eq "$((max_mesaBastos + 1))" ]; then
                 if [ "$carta" -ge 31 ] && [ "$carta" -le 40 ]; then
-                    echo "El jugador $jugadorTurno puede jugar la carta $carta."
                     numeroEliminar="$carta"
                     carta_valida=true
                     break
