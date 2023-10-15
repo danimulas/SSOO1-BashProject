@@ -80,11 +80,10 @@ barajarCartas() {
 # Función para repartir cartas a los jugadores
 repartirCartas() {
 
-
     # Calcular la cantidad de cartas por jugador
-    local cartasPorJugador=$((40/ numJugadores))
+    local cartasPorJugador=$((40 / numJugadores))
+    local cartasExtras=$((40 % numJugadores)) 
 
-    # Barajar las cartas
     barajarCartas
 
     cartasJugadores=()
@@ -95,15 +94,22 @@ repartirCartas() {
     mesaBastos=()
 
     for ((i = 1; i <= numJugadores; i++)); do
-        #Añadir espacio inicial en el string cartasJugadorActualç
         cartasJugadorActual=" "
-        for ((j = 1; j <= cartasPorJugador; j++)); do
+
+        if ((i <= cartasExtras)); then
+            cartasRepartir=$((cartasPorJugador + 1))
+        else
+            cartasRepartir=$cartasPorJugador
+        fi
+
+        for ((j = 1; j <= cartasRepartir; j++)); do
             carta=${cartas[((i - 1) * cartasPorJugador + j - 1)]}
             cartasJugadorActual+="$carta "
         done
         cartasJugadores+=("${cartasJugadorActual[@]}")
     done    
 }
+
 
 
 imprimirCartasIntro(){
@@ -169,9 +175,13 @@ turno() {
     done
 
     echo "El jugador $jugadorTurno empieza la partida"
+    if [ "$jugadorTurno" -eq "1" ]; then
+        jugar_manual
+    else
     eliminarCarta
     imprimirCartasIntro
     pasar_turno
+    fi
     while $jugar; do
         bucle_jugabilidad
         read -p "Pulse INTRO para continuar..."
@@ -206,9 +216,6 @@ bucle_jugabilidad() {
     echo "Turno del jugador $jugadorTurno"
     # Obtener las cartas del jugador actual
     cartasJugadorActual=${cartasJugadores[$((jugadorTurno-1))]}  
-
-    # Presiona INTRO para continuar
-    #read -p "Pulse INTRO para continuar..."
 
     # Convertir las cartas en un array
     IFS=' ' read -ra cartasNumeros <<< "$cartasJugadorActual"
@@ -263,7 +270,7 @@ jugar_manual(){
             ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ]) ||
             ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ]) ||
             ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ]) ||
-            [ "$carta" -eq "$((max_mesaBastos + 1))" ] || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ]
+            [ "$carta" -eq "$((max_mesaBastos + 1))" ] || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
         ); then
             posibilidad=true
             break
