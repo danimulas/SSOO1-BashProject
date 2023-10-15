@@ -264,8 +264,10 @@ jugar_manual(){
         fi
     done
     if $posibilidad; then
+        while true; do
         read -p "Elige una carta de tu mano: " posicion
-        echo "Carta elegida: $posicion"
+        carta_valida=false
+
         for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
             carta="${cartasNumeros[$i]}"
             if [ "$carta" -eq "$posicion" ]; then
@@ -284,11 +286,14 @@ jugar_manual(){
                 fi
             fi
         done
-    else
-         echo "El jugador $jugadorTurno no puede jugar ninguna carta."
-     pasar_turno
-     echo "Se le pasa el turno al jugador $jugadorTurno"
-     return
+
+        if [ "$carta_valida" = true ]; then
+            break  # Carta válida, salimos del bucle while
+        else
+            echo "La carta seleccionada no es válida. Por favor, elige una carta válida."
+        fi
+    done
+
     fi
 }
 
