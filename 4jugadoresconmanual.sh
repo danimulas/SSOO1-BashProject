@@ -128,6 +128,7 @@ imprimirCartasIntro(){
     echo "Mesa Bastos: ${mesaBastos[*]}"
     echo "--------------------------------------------------"
 }
+
 imprimirCartas(){
     echo "Cartas del Jugador 1: ${cartasjugador1[*]}"
     echo "Cartas del Jugador 2: ${cartasjugador2[*]}"
