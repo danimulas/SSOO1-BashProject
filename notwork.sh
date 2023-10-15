@@ -266,29 +266,24 @@ jugar_manual(){
     if $posibilidad; then
         read -p "Elige una carta de tu mano: " posicion
         echo "Carta elegida: $posicion"
-        if [ "$posicion" -eq -1 ]; then
-            pasar_turno
-            echo "Se le pasa el turno al jugador $jugadorTurno"
-        else
-            for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
-                carta="${cartasNumeros[$i]}"
-                if [ "$carta" -eq "$posicion" ]; then
-                    if (
-                        [ "$carta" -eq "$((min_mesaOros - 1))" ] || [ "$carta" -eq "$((max_mesaOros + 1))" ] ||
-                        ([ "$carta" -ge 11 ] && [ "$carta" -eq "$((min_mesaCopas - 1))" ]) ||
-                        ([ "$carta" -le 20 ] && [ "$carta" -eq "$((max_mesaCopas + 1))" ]) ||
-                        ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ]) ||
-                        ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ]) ||
-                        ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ]) ||
-                        [ "$carta" -eq "$((max_mesaBastos + 1))" ] || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ]
-                    ); then
-                        numeroEliminar="$carta"
-                        carta_valida=true
-                       break
-                    fi
+        for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
+            carta="${cartasNumeros[$i]}"
+            if [ "$carta" -eq "$posicion" ]; then
+                if (
+                    [ "$carta" -eq "$((min_mesaOros - 1))" ] || [ "$carta" -eq "$((max_mesaOros + 1))" ] ||
+                    ([ "$carta" -ge 11 ] && [ "$carta" -eq "$((min_mesaCopas - 1))" ]) ||
+                    ([ "$carta" -le 20 ] && [ "$carta" -eq "$((max_mesaCopas + 1))" ]) ||
+                    ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ]) ||
+                    ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ]) ||
+                    ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ]) ||
+                    [ "$carta" -eq "$((max_mesaBastos + 1))" ] || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ]
+                ); then
+                    numeroEliminar="$carta"
+                    carta_valida=true
+                    break
                 fi
-            done
-        fi
+            fi
+        done
     else
          echo "El jugador $jugadorTurno no puede jugar ninguna carta."
      pasar_turno
