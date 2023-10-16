@@ -140,10 +140,7 @@ eliminarCarta() {
     for ((i = 0; i < ${#cartasJugadores[@]}; i++)); do
         cartasJugadores[$i]=$(echo "${cartasJugadores[$i]}" | awk -v numeroEliminar="$numeroEliminar" '{gsub(" "numeroEliminar" ", " "); print}')
     done
-    imprimirCartas
-    echo -e "El jugador $jugadorTurno ha jugado la carta $(decodificarCarta $numeroEliminar)\n"
-    #imprimir cartas tras eliminar
-    
+        
     if ((numeroEliminar >= 1 && numeroEliminar <= 10)); then
         mesaOros+=("$numeroEliminar")
     elif ((numeroEliminar >= 11 && numeroEliminar <= 20)); then
@@ -158,6 +155,9 @@ eliminarCarta() {
     mesaCopas=($(printf "%s\n" "${mesaCopas[@]}" | sort -n))
     mesaEspadas=($(printf "%s\n" "${mesaEspadas[@]}" | sort -n))
     mesaBastos=($(printf "%s\n" "${mesaBastos[@]}" | sort -n))
+
+    imprimirCartas
+    echo -e "El jugador $jugadorTurno ha jugado la carta $(decodificarCarta $numeroEliminar)\n"
 }
 
 turno() {
@@ -174,14 +174,18 @@ turno() {
         done
     done
 
+    cartasJugadorActual=${cartasJugadores[$((jugadorTurno-1))]}  
+
+    # Convertir las cartas en un array
+    IFS=' ' read -ra cartasNumeros <<< "$cartasJugadorActual"
+
     echo "El jugador $jugadorTurno empieza la partida"
     if [ "$jugadorTurno" -eq "1" ]; then
-        jugar_manual
-    else
-    eliminarCarta
-    imprimirCartasIntro
-    pasar_turno
+        jugarManualInicio
     fi
+        eliminarCarta
+        imprimirCartasIntro
+        pasar_turno
     while $jugar; do
         bucle_jugabilidad
         read -p "Pulse INTRO para continuar..."
@@ -217,11 +221,7 @@ bucle_jugabilidad() {
     # Obtener las cartas del jugador actual
     cartasJugadorActual=${cartasJugadores[$((jugadorTurno-1))]}  
 
-    # Convertir las cartas en un array
     IFS=' ' read -ra cartasNumeros <<< "$cartasJugadorActual"
-    #imprimirCartas
-    
-
 
     carta_valida=false
 
@@ -236,8 +236,6 @@ bucle_jugabilidad() {
 
     if $carta_valida; then
         eliminarCarta
-        #imprimirCartasIntro
-         # Comprobar si el jugador se ha quedado sin cartas
         if [ "${cartasJugadores[$((jugadorTurno-1))]}" == " " ]; then
             echo "EL JUGADOR $jugadorTurno HA GANADO LA PARTIDA!!"
             jugar=false
@@ -245,17 +243,42 @@ bucle_jugabilidad() {
             pasar_turno
         fi
     else
-        #clear
         echo "El jugador $jugadorTurno no puede jugar ninguna carta."
         pasar_turno
         echo "Se le pasa el turno al jugador $jugadorTurno"
-        #read -p "Pulse INTRO para continuar..."
     fi
     
 }
 
+jugarManualInicio(){
+
+    imprimirCartas
+    while true; do
+        read -p "Elige una carta de tu mano: " posicion
+        carta_valida=false
+
+        for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
+            carta="${cartasNumeros[$i]}"
+            if [ "$carta" -eq "$posicion" ]; then
+                if ([ "$carta" -eq 5 ]); then
+                    numeroEliminar="$carta"
+                    carta_valida=true
+                    break
+                fi
+            fi
+        done
+
+        if [ "$carta_valida" = true ]; then
+            clear
+            break  # Carta válida, salimos del bucle while
+        else
+            echo "La carta seleccionada no es válida. Por favor, elige una carta válida."
+        fi
+    done
+
+}
+
 jugar_manual(){
-    # Elegir el número de la carta que deseas jugar, si no deseas jugar ninguna carta, introduce -1
 
     imprimirCartas
 
@@ -291,7 +314,7 @@ jugar_manual(){
                     ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ]) ||
                     ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ]) ||
                     ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ]) ||
-                    [ "$carta" -eq "$((max_mesaBastos + 1))" ] || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ]
+                    [ "$carta" -eq "$((max_mesaBastos + 1))" ] || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
                 ); then
                     numeroEliminar="$carta"
                     carta_valida=true
