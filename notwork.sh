@@ -69,7 +69,7 @@ barajarCartas() {
     cartas=()
 
     # Generar todas las cartas con números del 1 al 40
-    for ((numero=1; numero<=40; numero++)); do
+    for ((numero=1; numero<=10; numero++)); do
         cartas+=("$numero")
     done
 
@@ -81,8 +81,8 @@ barajarCartas() {
 repartirCartas() {
 
     # Calcular la cantidad de cartas por jugador
-    local cartasPorJugador=$((40 / numJugadores))
-    local cartasExtras=$((40 % numJugadores)) 
+    local cartasPorJugador=$((10 / numJugadores))
+    local cartasExtras=$((10 % numJugadores)) 
 
     barajarCartas
 
@@ -237,7 +237,11 @@ bucle_jugabilidad() {
     if $carta_valida; then
         eliminarCarta
         if [ "${cartasJugadores[$((jugadorTurno-1))]}" == " " ]; then
+            end_time=$(date +%s.%N)
+            elapsed_time=$(awk -v st="$start_time" -v et="$end_time" 'BEGIN { printf "%.6f", et - st }')
+            echo "Tiempo transcurrido: $elapsed_time segundos"
             echo "EL JUGADOR $jugadorTurno HA GANADO LA PARTIDA!!"
+            sumarPuntos
             cargarDatosPartidaEnFicherolog
             jugar=false
         else
@@ -387,6 +391,7 @@ decidirCarta(){
         done
 }
 jugar(){
+    start_time=$(date +%s.%N)
     repartirCartas
     turno
     
@@ -430,35 +435,135 @@ maxminmesas(){
     min_mesaBastos=$(find_min ${mesaBastos[@]})
     max_mesaBastos=$(find_max ${mesaBastos[@]})
 }
+
+#Funcion que sume el numero de cartas que tienen los jugadores que no han ganado
+sumarPuntos(){
+    #recorrer el array de cartas de los jugadores, por cada carta que tenga el jugador sumar 1 punto
+    PUNTOS_PARTIDA_FINAL=0
+    for ((i=0; i<numJugadores; i++)); do
+        cartasJugador=${cartasJugadores[$i]}
+        IFS=' ' read -ra cartasArray <<< "$cartasJugador"
+        for carta in "${cartasArray[@]}"; do
+            PUNTOS_PARTIDA_FINAL=$((PUNTOS_PARTIDA_FINAL+1))
+        done
+    done
+}
+
+
+
 cargarDatosPartidaEnFicherolog(){
     #Fecha|Hora|Jugadores|TiempoTotal|Ganador|Puntos
 
-    echo -e "FECHA            >> $(date +"%d%m%y")"
+    echo -e "FECHA            >> $(date +"%d/%m/%y")"
     echo -e "HORA             >> $(date +"%H:%M")"
-    echo -e "JUGADORES        >> $jugadores"
-    echo -e "TIEMPO           >> $(($SECONDS-$TIEMPO)) s"
-    echo -e "JUGADOR GANADOR  >> $(jugadorTurno-1)"
+    echo -e "JUGADORES        >> $numJugadores"
+    echo -e "TIEMPO           >> $elapsed_time"
+    echo -e "JUGADOR GANADOR  >> $jugadorTurno"
     echo -e "PUNTOS           >> $PUNTOS_PARTIDA_FINAL" #funcion para que sume las cartas de los perdedores
     #falta cartas jugadores
 
-    if ! [[ -w $LOG ]] && [[ -a $LOG ]]
+    if ! [[ -w $LOG ]] && [[ -a $LOG ]]; then
+    echo -e "ERROR: No se han podido guardar los datos de la partida en $LOG por falta de permisos.\n"
+elif ! [[ -s $LOG ]]; then
+    echo -e -n "$(date +"%d%m%y")|$(date +"%H:%M")|$numJugadores|$elapsed_time|$jugadorTurno" >> $LOG #|$PUNTOS_PARTIDA_FINAL
+else
+    echo -e -n "\n$(date +"%d%m%y")|$(date +"%H:%M")|$numJugadores|$elapsed_time|$jugadorTurno" >> $LOG #|$PUNTOS_PARTIDA_FINAL
+fi
+read -p "Pulse INTRO para continuar..."
+show_menu
+
+}
+
+mostrarEstadisticas(){
+    if test -r $FICHEROLOG
     then
-        echo -e "ERROR: No se han podido guardar los datos de la partida en $LOG por falta de permisos.\n"
-    elif ! [[ -s $LOG ]]
-    then
-        echo -e -n "$(date +"%d%m%y")|$(date +"%H:%M")|$jugadores|$(($SECONDS-$TIEMPO))|$(jugadorTurno-1)" >> $LOG #|$PUNTOS_PARTIDA_FINAL
-    else 
-        echo -e -n "\n$(date +"%d%m%y")|$(date +"%H:%M")|$jugadores|$(($SECONDS-$TIEMPO))|$(jugadorTurno-1)" >> $LOG #|$PUNTOS_PARTIDA_FINAL
+        mostrarTextoEstadisticas
+
+        # -s -> existe y tiene tamaño mayor que cero
+        if ! [[ -s $FICHEROLOG ]]
+        then
+            echo -e "El registro de partidas está vacío, inicia un juego para mostrar resultados."
+        else
+            PARTIDAS_JUGADAS_TOTAL=0   
+            MEDIA_TIEMPOS=0
+            TIEMPO_TOTAL=0
+
+            TIEMPO_TOTAL_PART_JUGADAS=0
+            PORCENTAJE=0
+
+            declare -a SUMA_PUNTOS
+
+            for line in $(cat $FICHEROLOG)
+            do
+                let PARTIDAS_JUGADAS_TOTAL=$PARTIDAS_JUGADAS_TOTAL+1
+
+                # Sumatorio puntos maximos de las partidas
+                PUNTOS_TEMP=$( echo $line | cut -f 7 -d "|")
+                let MEDIA_PUNTOS_GANADORES=$MEDIA_PUNTOS_GANADORES+$PUNTOS_TEMP
+
+                # Sumatorio rondas jugadas de las partidas
+                RONDAS_TEMP=$( echo $line | cut -f 5 -d "|")
+                let MEDIA_RONDAS_JUGADAS=$MEDIA_RONDAS_JUGADAS+$RONDAS_TEMP
+
+                # Sumatorio tiempo partidas jugadas
+                TIEMPO_TEMP=$( echo $line | cut -f 4 -d "|")
+                let MEDIA_TIEMPOS_PART_JUGADAS=$MEDIA_TIEMPOS_PART_JUGADAS+$TIEMPO_TEMP
+                let TIEMPO_TOTAL_PART_JUGADAS=$TIEMPO_TOTAL_PART_JUGADAS+$TIEMPO_TEMP
+
+                # Sumatorio inteligencia partidas
+                INTELIGENCIA_TEMP=$( echo $line | cut -f 6 -d "|")
+                if [[ $INTELIGENCIA_TEMP = "1" ]]
+                then
+                    let PORCENTAJE=$PORCENTAJE+1
+                fi
+
+                # Sumatorio puntos de todos los jugadores
+                PUNTOS_TEMP=$( echo $line | cut -f 9 -d "|")
+                SUMA_PUNTOS[1]=$( echo $PUNTOS_TEMP | cut -f 1 -d "-")
+                SUMA_PUNTOS[2]=$( echo $PUNTOS_TEMP | cut -f 2 -d "-")
+                SUMA_PUNTOS[3]=$( echo $PUNTOS_TEMP | cut -f 3 -d "-")
+                SUMA_PUNTOS[4]=$( echo $PUNTOS_TEMP | cut -f 4 -d "-" | tr -d "\r" )
+
+                let MEDIA_PUNTOS_TODOS_JUGADORES=$MEDIA_PUNTOS_TODOS_JUGADORES+${SUMA_PUNTOS[1]}
+                let MEDIA_PUNTOS_TODOS_JUGADORES=$MEDIA_PUNTOS_TODOS_JUGADORES+${SUMA_PUNTOS[2]}
+                if [[ ${SUMA_PUNTOS[3]} != "*" ]]
+                then
+                    let MEDIA_PUNTOS_TODOS_JUGADORES=$MEDIA_PUNTOS_TODOS_JUGADORES+${SUMA_PUNTOS[3]}
+                fi
+
+                if [[ ${SUMA_PUNTOS[4]} != "*" ]]
+                then
+                    let MEDIA_PUNTOS_TODOS_JUGADORES=$MEDIA_PUNTOS_TODOS_JUGADORES+${SUMA_PUNTOS[4]}
+                fi
+
+                #echo -e $MEDIA_PUNTOS_TODOS_JUGADORES
+            done
+
+            ## CALCULOS
+            MEDIA_PUNTOS_GANADORES=$(( $MEDIA_PUNTOS_GANADORES/$PARTIDAS_JUGADAS_TOTAL ))
+            MEDIA_RONDAS_JUGADAS=$(( $MEDIA_RONDAS_JUGADAS/$PARTIDAS_JUGADAS_TOTAL ))
+            MEDIA_TIEMPOS_PART_JUGADAS=$(( $MEDIA_TIEMPOS_PART_JUGADAS/$PARTIDAS_JUGADAS_TOTAL ))
+            PORCENTAJE=$(( ($PORCENTAJE*100)/$PARTIDAS_JUGADAS_TOTAL ))
+            MEDIA_PUNTOS_TODOS_JUGADORES=$(( $MEDIA_PUNTOS_TODOS_JUGADORES/$PARTIDAS_JUGADAS_TOTAL ))
+
+            echo -e "Numero total de partidas jugadas                                                         >> $PARTIDAS_JUGADAS_TOTAL"
+            echo -e "Media de los puntos ganadores                                                            >> $MEDIA_PUNTOS_GANADORES"
+            echo -e "Media de rondas de las partidas jugadas                                                  >> $MEDIA_RONDAS_JUGADAS"
+            echo -e "Media de los tiempos de todas las partidas jugadas                                       >> $MEDIA_TIEMPOS_PART_JUGADAS"
+            echo -e "Tiempo total invertido en todas las partidas                                             >> $TIEMPO_TOTAL_PART_JUGADAS"
+            echo -e "Porcentaje de partidas jugadas con inteligencia activada                                 >> $PORCENTAJE %"
+            echo -e "Media de la suma de los puntos obtenidos por todos los jugadores en las partidas jugadas >> $MEDIA_PUNTOS_TODOS_JUGADORES"
+        fi
+    else
+        echo -e "ERROR: No existe $FICHEROLOG o no dispone de los permisos necesarios."
     fi
-    read -p "Pulse INTRO para continuar..."
-    show_menu
 }
 # Función para jugar una partida de 5illo
 play_game() {
     numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
     echo "Comenzando una partida de 5illo con $numJugadores jugadores..."
     jugar
-    read -p "Pulse INTRO para continuar..."
+    #read -p "Pulse INTRO para continuar..."
 }
 
 # Función para mostrar estadísticas
