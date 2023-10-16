@@ -238,6 +238,7 @@ bucle_jugabilidad() {
         eliminarCarta
         if [ "${cartasJugadores[$((jugadorTurno-1))]}" == " " ]; then
             echo "EL JUGADOR $jugadorTurno HA GANADO LA PARTIDA!!"
+            cargarDatosPartidaEnFicherolog
             jugar=false
         else
             pasar_turno
@@ -429,7 +430,29 @@ maxminmesas(){
     min_mesaBastos=$(find_min ${mesaBastos[@]})
     max_mesaBastos=$(find_max ${mesaBastos[@]})
 }
+cargarDatosPartidaEnFicherolog(){
+    #Fecha|Hora|Jugadores|TiempoTotal|Ganador|Puntos
 
+    echo -e "FECHA            >> $(date +"%d%m%y")"
+    echo -e "HORA             >> $(date +"%H:%M")"
+    echo -e "JUGADORES        >> $jugadores"
+    echo -e "TIEMPO           >> $(($SECONDS-$TIEMPO)) s"
+    echo -e "JUGADOR GANADOR  >> $(jugadorTurno-1)"
+    echo -e "PUNTOS           >> $PUNTOS_PARTIDA_FINAL" #funcion para que sume las cartas de los perdedores
+    #falta cartas jugadores
+
+    if ! [[ -w $LOG ]] && [[ -a $LOG ]]
+    then
+        echo -e "ERROR: No se han podido guardar los datos de la partida en $LOG por falta de permisos.\n"
+    elif ! [[ -s $LOG ]]
+    then
+        echo -e -n "$(date +"%d%m%y")|$(date +"%H:%M")|$jugadores|$(($SECONDS-$TIEMPO))|$(jugadorTurno-1)" >> $LOG #|$PUNTOS_PARTIDA_FINAL
+    else 
+        echo -e -n "\n$(date +"%d%m%y")|$(date +"%H:%M")|$jugadores|$(($SECONDS-$TIEMPO))|$(jugadorTurno-1)" >> $LOG #|$PUNTOS_PARTIDA_FINAL
+    fi
+    read -p "Pulse INTRO para continuar..."
+    show_menu
+}
 # Función para jugar una partida de 5illo
 play_game() {
     numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
