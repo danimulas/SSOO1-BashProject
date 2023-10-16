@@ -220,17 +220,17 @@ convertir_a_numeros() {
 }
 maxminmesas(){
   # Obtener los valores mínimos y máximos de las mesas
-    min_mesaOros=$(find_min ${mesaOrosNumeros[@]})
-    max_mesaOros=$(find_max ${mesaOrosNumeros[@]})
+    min_mesaOros=$(find_min ${mesaOros[@]})
+    max_mesaOros=$(find_max ${mesaOros[@]})
 
-    min_mesaCopas=$(find_min ${mesaCopasNumeros[@]})
-    max_mesaCopas=$(find_max ${mesaCopasNumeros[@]})
+    min_mesaCopas=$(find_min ${mesaCopas[@]})
+    max_mesaCopas=$(find_max ${mesaCopas[@]})
 
-    min_mesaEspadas=$(find_min ${mesaEspadasNumeros[@]})
-    max_mesaEspadas=$(find_max ${mesaEspadasNumeros[@]})
+    min_mesaEspadas=$(find_min ${mesaEspadas[@]})
+    max_mesaEspadas=$(find_max ${mesaEspadas[@]})
 
-    min_mesaBastos=$(find_min ${mesaBastosNumeros[@]})
-    max_mesaBastos=$(find_max ${mesaBastosNumeros[@]})
+    min_mesaBastos=$(find_min ${mesaBastos[@]})
+    max_mesaBastos=$(find_max ${mesaBastos[@]})
 }
 convertir(){
     # Convertir las cartas en un array
