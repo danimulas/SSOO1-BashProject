@@ -37,6 +37,7 @@ S)SALIR"
 configure_game() {
     echo "Configuración actual:"
     cat config.cfg
+    log_directory="log"  # Directorio fijo llamado "log"
 
     read -p "Nuevo número de jugadores (2-4): " jugadores
     while [[ ! $jugadores =~ ^[2-4]$ ]]; do
@@ -48,16 +49,18 @@ configure_game() {
         read -p "Por favor, introduzca una estrategia válida (0, 1 o 2): " estrategia
     done
 
-    read -p "Nueva ruta del archivo de log: " log
-    # Asegurarse de que la ruta del archivo de log es válida
-    while [[ ! -d $(dirname $log) ]]; do
-        read -p "Ruta no válida. Por favor, introduzca una ruta válida para el archivo de log: " log
-    done
-    
+    read -p "Nombre del archivo de log (sin la extensión .log): " log_filename
+
+    # Ruta completa del archivo de log
+    log_file="$log_directory/$log_filename.log"
+
     # Actualizar configuración
     echo "JUGADORES=$jugadores" > config.cfg
     echo "ESTRATEGIA=$estrategia" >> config.cfg
-    echo "LOG=$log" >> config.cfg
+    echo "LOG=$log_file" >> config.cfg
+
+    echo -e "Fecha|Hora|Jugadores|TiempoTotal|Ganador|Puntos\n" > "$log_file"
+
 
     echo -e "\nCONFIGURACIÓN ACTUALIZADA CORRECTAMENTE"
     read -p "Pulse INTRO para continuar..."
@@ -288,11 +291,7 @@ jugar_manual(){
     imprimirCartas
 
     posibilidad=false
-    echo "Max mesa oros: $max_mesaOros Min mesa oros: $min_mesaOros"
-    echo "Max mesa copas: $max_mesaCopas Min mesa copas: $min_mesaCopas"
-    echo "Max mesa espadas: $max_mesaEspadas Min mesa espadas: $min_mesaEspadas"
-    echo "Max mesa bastos: $max_mesaBastos Min mesa bastos: $min_mesaBastos"
-    
+   
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
         carta="${cartasNumeros[$i]}"
         if (
@@ -456,28 +455,45 @@ sumarPuntos(){
 
 
 cargarDatosPartidaEnFicherolog(){
-    #Fecha|Hora|Jugadores|TiempoTotal|Ganador|Puntos
 
-    echo -e "FECHA            >> $(date +"%d/%m/%y")"
-    echo -e "HORA             >> $(date +"%H:%M")"
-    echo -e "JUGADORES        >> $numJugadores"
-    echo -e "TIEMPO           >> $elapsed_time"
-    echo -e "JUGADOR GANADOR  >> $jugadorTurno"
-    echo -e "PUNTOS           >> $PUNTOS_PARTIDA_FINAL" #funcion para que sume las cartas de los perdedores
-    #falta cartas jugadores
+    # Fecha|Hora|Jugadores|TiempoTotal|Ganador|Puntos
+    #Buscar en config.cfg el LOG
+    if [ -f "config.cfg" ]; then
+        # Leer la configuración del archivo config.cfg
+        source "config.cfg"
+        # Verificar si la variable LOG está definida en la configuración
+        if [ -n "$LOG" ]; then
+            log_file="$LOG"
+        else
+            echo "ERROR: La variable LOG no está definida en el archivo config.cfg"
+        fi
+    fi
+    # Obtener la fecha y hora actual
+    fecha_actual=$(date +"%d/%m/%y")
+    hora_actual=$(date +"%H:%M")
 
-    if ! [[ -w $LOG ]] && [[ -a $LOG ]]; then
-    echo -e "ERROR: No se han podido guardar los datos de la partida en $LOG por falta de permisos.\n"
-elif ! [[ -s $LOG ]]; then
-    echo -e -n "$(date +"%d%m%y")|$(date +"%H:%M")|$numJugadores|$elapsed_time|$jugadorTurno" >> $LOG #|$PUNTOS_PARTIDA_FINAL
-else
-    echo -e -n "\n$(date +"%d%m%y")|$(date +"%H:%M")|$numJugadores|$elapsed_time|$jugadorTurno" >> $LOG #|$PUNTOS_PARTIDA_FINAL
-fi
-read -p "Pulse INTRO para continuar..."
-show_menu
+
+    # Imprimir los datos en el archivo de registro en el formato deseado
+    echo -e "$fecha_actual|$hora_actual|$numJugadores|$elapsed_time|$jugadorTurno\n" >> "$log_file"
+    #Imprimir las cartas restantes de los jugadores y si no han jugado pones un * es decir JUGADOR1|JUGADOR2|JUGADOR3|JUGADOR4
+    echo -n "Cartas Jugadores: " >> "$log_file"
+
+    for ((i=0; i<$jugadores; i++)); do
+        cartasJugador=${cartasJugadores[$i]}
+        IFS=' ' read -ra cartasArray <<< "$cartasJugador"
+            echo -n "${cartasJugadores[$i]}|" >> "$log_file"
+    done
+    for((i=1; i<4-$jugadores; i++)); do
+        echo -n "*|" >> "$log_file"
+    done
+
+    read -p "Pulse INTRO para continuar..."
+    show_menu
+
+
 
 }
-
+esta
 mostrarEstadisticas(){
     if test -r $FICHEROLOG
     then
