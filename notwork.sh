@@ -1,17 +1,32 @@
 #!/bin/bash
 
-# Comprobar si se proporciona el argumento -g
-if [ "$1" == "-g" ]; then 
-    # Mostrar datos del grupo y estrategias
-    echo "COMPONENTES DEL GRUPO"
-    echo "[Mario Prieta Sánchez 49839758T]"
-    echo "[Daniel Mulas Fajardo 70961169M]"
-    echo "ESTRATEGIAS IMPLEMENTADAS"
-    echo "Estrategia 1: [Descripción de la estrategia 1]"
-    echo "Estrategia 2: [Descripción de la estrategia 2]"
-    
-    exit
-fi
+
+mostrarProgramadores() {
+    cat << "EOF"
+    ┌─────────────────────────────────────────────────┐
+    │                 PROGRAMADORES                   │
+    ├─────────────────────────────────────────────────┤
+    │              Mario Prieta Sánchez               │
+    │              Daniel Mulas Fajardo               │
+    └─────────────────────────────────────────────────┘
+EOF
+}
+
+
+comprobarArgumentos(){
+    if [[ "$2" ]] || [[ "$1" ]] && [[ "$1" != "-g" ]]; then
+        echo -e "ERROR: Para ejecutar el programa escribe 'domino.sh [-g]'."
+        exit
+    elif [[ "$1" = "-g" ]]; then
+        mostrarProgramadores
+        echo "ESTRATEGIAS IMPLEMENTADAS"
+        echo "Estrategia 1: [Descripción de la estrategia 1]"
+        echo "Estrategia 2: [Descripción de la estrategia 2]"
+        exit
+    fi
+}
+
+
 
 # Función para mostrar el menú principal
 show_menu() {
@@ -532,88 +547,89 @@ cargarDatosPartidaEnFicherolog(){
 
 
 }
-mostrarEstadisticas(){
-    if test -r $log_file
-    then
+calcular_estadisticas() {
+    # Variables para almacenar las estadísticas
+    # Definir la ruta del archivo de registro
+    log_file="log/prueba.log"
 
-        # -s -> existe y tiene tamaño mayor que cero
-        if ! [[ -s $log_file ]]
-        then
-            echo -e "El registro de partidas está vacío, inicia un juego para mostrar resultados."
-        else
-            PARTIDAS_JUGADAS_TOTAL=0   
-            MEDIA_TIEMPOS=0
-            TIEMPO_TOTAL=0
-            TIEMPO_TOTAL_PART_JUGADAS=0
-            PORCENTAJE=0
-
-            declare -a SUMA_PUNTOS
-
-            for line in $(cat $log_file)
-            do
-                let PARTIDAS_JUGADAS_TOTAL=$PARTIDAS_JUGADAS_TOTAL+1
-
-                # Sumatorio puntos maximos de las partidas
-                PUNTOS_TEMP=$( echo $line | cut -f 7 -d "|")
-                let MEDIA_PUNTOS_GANADORES=$MEDIA_PUNTOS_GANADORES+$PUNTOS_TEMP
-
-                # Sumatorio rondas jugadas de las partidas
-                RONDAS_TEMP=$( echo $line | cut -f 5 -d "|")
-                let MEDIA_RONDAS_JUGADAS=$MEDIA_RONDAS_JUGADAS+$RONDAS_TEMP
-
-                # Sumatorio tiempo partidas jugadas
-                TIEMPO_TEMP=$( echo $line | cut -f 4 -d "|")
-                let MEDIA_TIEMPOS_PART_JUGADAS=$MEDIA_TIEMPOS_PART_JUGADAS+$TIEMPO_TEMP
-                let TIEMPO_TOTAL_PART_JUGADAS=$TIEMPO_TOTAL_PART_JUGADAS+$TIEMPO_TEMP
-
-                # Sumatorio inteligencia partidas
-                INTELIGENCIA_TEMP=$( echo $line | cut -f 6 -d "|")
-                if [[ $INTELIGENCIA_TEMP = "1" ]]
-                then
-                    let PORCENTAJE=$PORCENTAJE+1
-                fi
-
-                # Sumatorio puntos de todos los jugadores
-                PUNTOS_TEMP=$( echo $line | cut -f 9 -d "|")
-                SUMA_PUNTOS[1]=$( echo $PUNTOS_TEMP | cut -f 1 -d "-")
-                SUMA_PUNTOS[2]=$( echo $PUNTOS_TEMP | cut -f 2 -d "-")
-                SUMA_PUNTOS[3]=$( echo $PUNTOS_TEMP | cut -f 3 -d "-")
-                SUMA_PUNTOS[4]=$( echo $PUNTOS_TEMP | cut -f 4 -d "-" | tr -d "\r" )
-
-                let MEDIA_PUNTOS_TODOS_JUGADORES=$MEDIA_PUNTOS_TODOS_JUGADORES+${SUMA_PUNTOS[1]}
-                let MEDIA_PUNTOS_TODOS_JUGADORES=$MEDIA_PUNTOS_TODOS_JUGADORES+${SUMA_PUNTOS[2]}
-                if [[ ${SUMA_PUNTOS[3]} != "*" ]]
-                then
-                    let MEDIA_PUNTOS_TODOS_JUGADORES=$MEDIA_PUNTOS_TODOS_JUGADORES+${SUMA_PUNTOS[3]}
-                fi
-
-                if [[ ${SUMA_PUNTOS[4]} != "*" ]]
-                then
-                    let MEDIA_PUNTOS_TODOS_JUGADORES=$MEDIA_PUNTOS_TODOS_JUGADORES+${SUMA_PUNTOS[4]}
-                fi
-
-                #echo -e $MEDIA_PUNTOS_TODOS_JUGADORES
-            done
-
-            ## CALCULOS
-            MEDIA_PUNTOS_GANADORES=$(( $MEDIA_PUNTOS_GANADORES/$PARTIDAS_JUGADAS_TOTAL ))
-            MEDIA_RONDAS_JUGADAS=$(( $MEDIA_RONDAS_JUGADAS/$PARTIDAS_JUGADAS_TOTAL ))
-            MEDIA_TIEMPOS_PART_JUGADAS=$(( $MEDIA_TIEMPOS_PART_JUGADAS/$PARTIDAS_JUGADAS_TOTAL ))
-            PORCENTAJE=$(( ($PORCENTAJE*100)/$PARTIDAS_JUGADAS_TOTAL ))
-            MEDIA_PUNTOS_TODOS_JUGADORES=$(( $MEDIA_PUNTOS_TODOS_JUGADORES/$PARTIDAS_JUGADAS_TOTAL ))
-
-            echo -e "Numero total de partidas jugadas                                                         >> $PARTIDAS_JUGADAS_TOTAL"
-            echo -e "Media de los puntos ganadores                                                            >> $MEDIA_PUNTOS_GANADORES"
-            echo -e "Media de rondas de las partidas jugadas                                                  >> $MEDIA_RONDAS_JUGADAS"
-            echo -e "Media de los tiempos de todas las partidas jugadas                                       >> $MEDIA_TIEMPOS_PART_JUGADAS"
-            echo -e "Tiempo total invertido en todas las partidas                                             >> $TIEMPO_TOTAL_PART_JUGADAS"
-            echo -e "Porcentaje de partidas jugadas con inteligencia activada                                 >> $PORCENTAJE %"
-            echo -e "Media de la suma de los puntos obtenidos por todos los jugadores en las partidas jugadas >> $MEDIA_PUNTOS_TODOS_JUGADORES"
-        fi
-    else
-        echo -e "ERROR: No existe $log_file o no dispone de los permisos necesarios."
+    # Verificar si el archivo de registro existe
+    if [ ! -f "$log_file" ]; then
+        echo "ERROR: El archivo de registro '$log_file' no existe."
+        return
     fi
+    total_partidas=0
+    total_tiempo=0
+    total_puntos=0
+    partidas_ganadas_A=0
+    partidas_ganadas_B=0
+    partidas_ganadas_C=0
+    partidas_ganadas_D=0
+
+    # Leer el fichero de log línea por línea
+    while IFS='|' read -r fecha hora jugadores tiempo turno puntos cartas; do
+        # Calcular estadísticas
+        total_partidas=$((total_partidas + 1))
+        total_tiempo=$(bc -l <<< "$total_tiempo + $tiempo")
+        total_puntos=$(bc -l <<< "$total_puntos + $puntos")
+
+        # Verificar el jugador ganador y contar las partidas ganadas por cada jugador
+        case "$turno" in
+            1)
+                partidas_ganadas_A=$((partidas_ganadas_A + 1))
+                ;;
+            2)
+                partidas_ganadas_B=$((partidas_ganadas_B + 1))
+                ;;
+            3)
+                partidas_ganadas_C=$((partidas_ganadas_C + 1))
+                ;;
+            4)
+                partidas_ganadas_D=$((partidas_ganadas_D + 1))
+                ;;
+        esac
+    done < "$1" # $1 es el nombre del fichero de log pasado como argumento
+
+    # Calcular medias y porcentajes
+    media_tiempo=$(bc -l <<< "$total_tiempo / $total_partidas")
+    media_puntos=$(bc -l <<< "$total_puntos / $total_partidas")
+    porcentaje_ganadas_A=$(bc -l <<< "($partidas_ganadas_A / $total_partidas) * 100")
+    porcentaje_ganadas_B=$(bc -l <<< "($partidas_ganadas_B / $total_partidas) * 100")
+    porcentaje_ganadas_C=$(bc -l <<< "($partidas_ganadas_C / $total_partidas) * 100")
+    porcentaje_ganadas_D=$(bc -l <<< "($partidas_ganadas_D / $total_partidas) * 100")
+
+    # Mostrar estadísticas
+    echo "Número total de partidas jugadas: $total_partidas"
+    echo "Media de los tiempos de todas las partidas jugadas: $media_tiempo"
+    echo "Tiempo total invertido en todas las partidas: $total_tiempo"
+    echo "Media de los puntos obtenidos por el ganador en todas las partidas: $media_puntos"
+    echo "Porcentaje de partidas ganadas del jugador 1: $porcentaje_ganadas_A%"
+    echo "Porcentaje de partidas ganadas del jugador 2: $porcentaje_ganadas_B%"
+    echo "Porcentaje de partidas ganadas del jugador 3: $porcentaje_ganadas_C%"
+    echo "Porcentaje de partidas ganadas del jugador 4: $porcentaje_ganadas_D%"
 }
+
+calcularClasificacion() {
+        log_file="log/prueba.log"
+
+    # Verificar si el archivo de registro existe
+    if [ ! -f "$log_file" ]; then
+        echo "ERROR: El archivo de registro '$log_file' no existe."
+        return
+    fi
+
+    partida_mas_corta=$(nawk -F'|' '{if ($4 < min || NR == 1) min = $4} END {print min}' "$1")
+    partida_mas_larga=$(nawk -F'|' '{if ($4 > max) max = $4} END {print max}' "$1")
+    max_puntos_ganados=$(nawk -F'|' '{if ($6 > max) max = $6} END {print max}' "$1")
+    max_cartas_restantes=$(nawk -F'|' '{if ($7 > max) max = $7} END {print max}' "$1")
+
+    # Mostrar estadísticas de clasificación
+    echo "Partida más corta: $partida_mas_corta segundos"
+    echo "Partida más larga: $partida_mas_larga segundos"
+    echo "Partida con mayor número de puntos obtenidos por el ganador: $max_puntos_ganados puntos"
+    echo "Partida en la que un jugador se ha quedado con mayor número de cartas: $max_cartas_restantes cartas"
+}
+
+
 # Función para jugar una partida de 5illo
 play_game() {
     numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
@@ -630,19 +646,20 @@ play_game() {
 # Función para mostrar estadísticas
 show_statistics() {
     # Implementa la lógica para mostrar estadísticas aquí
-    echo "Función para mostrar estadísticas (pendiente de implementar)."
+    calcular_estadisticas "log/prueba.log"
     read -p "Pulse INTRO para continuar..."
 }
 
 # Función para mostrar clasificación
 show_leaderboard() {
     # Implementa la lógica para mostrar la clasificación aquí
-    echo "Función para mostrar la clasificación (pendiente de implementar)."
+    calcularClasificacion "log/prueba.log"
     read -p "Pulse INTRO para continuar..."
 }
 
 # Bucle principal
 while true; do
+comprobarArgumentos "$*"
     show_menu
     read option
 
