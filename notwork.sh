@@ -59,8 +59,6 @@ configure_game() {
     echo "ESTRATEGIA=$estrategia" >> config.cfg
     echo "LOG=$log_file" >> config.cfg
 
-    echo -e "Fecha|Hora|Jugadores|TiempoTotal|Ganador|Puntos\n" > "$log_file"
-
     echo -e "\nCONFIGURACIÓN ACTUALIZADA CORRECTAMENTE"
     read -p "Pulse INTRO para continuar..."
 }
@@ -71,12 +69,31 @@ barajarCartas() {
     cartas=()
 
     # Generar todas las cartas con números del 1 al 40
-    for ((numero=1; numero<=40; numero++)); do
+    numero=1
+    while [ $numero -le 40 ]; do
         cartas+=("$numero")
+        numero=$((numero+1))
     done
 
+    # Obtener el número de elementos en el array
+    num_cartas=${#cartas[@]}
 
+    # Barajar el array de cartas en orden aleatorio
+    i=0
+    while [ $i -lt $num_cartas ]; do
+        # Generar un índice aleatorio utilizando /dev/random
+        random_bytes=$(od -An -N2 -i /dev/random)
+        random_index=$((random_bytes % num_cartas))
+
+        # Intercambiar la carta en la posición actual con la carta en el índice aleatorio
+        tmp=${cartas[i]}
+        cartas[i]=${cartas[random_index]}
+        cartas[random_index]=$tmp
+        i=$((i+1))
+    done
 }
+
+
 
 
 
@@ -201,6 +218,7 @@ turno() {
         pasar_turno
     while $jugar; do
         bucle_jugabilidad
+        read -p "Pulse INTRO para continuar..."
     done
     
     
@@ -476,10 +494,6 @@ cargarDatosPartidaEnFicherolog(){
         else
             echo "ERROR: La variable LOG no está definida en el archivo config.cfg"
         fi
-    fi
-    # Verifica si existe el archivo log_file
-    if [ ! -f "$log_file" ]; then
-        echo -e "Fecha|Hora|Jugadores|TiempoTotal|Ganador|Puntos\n" > "$log_file"
     fi
     # Obtener la fecha y hora actual
     fecha_actual=$(date +"%d/%m/%y")
