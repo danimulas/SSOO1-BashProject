@@ -72,20 +72,20 @@ barajarCartas() {
     cartas=()
 
     # Generar todas las cartas con números del 1 al 40
-    for ((numero=1; numero<=10; numero++)); do
+    for ((numero=1; numero<=40; numero++)); do
         cartas+=("$numero")
     done
 
-    # Barajar el array de cartas en orden aleatorio
-    cartas=($(shuf -e "${cartas[@]}"))
 }
+
+
 
 # Función para repartir cartas a los jugadores
 repartirCartas() {
 
     # Calcular la cantidad de cartas por jugador
-    local cartasPorJugador=$((10 / numJugadores))
-    local cartasExtras=$((10 % numJugadores)) 
+    local cartasPorJugador=$((40 / numJugadores))
+    local cartasExtras=$((40 % numJugadores)) 
 
     barajarCartas
 
@@ -141,7 +141,18 @@ imprimirCartas(){
 
 eliminarCarta() {
     for ((i = 0; i < ${#cartasJugadores[@]}; i++)); do
-        cartasJugadores[$i]=$(echo "${cartasJugadores[$i]}" | awk -v numeroEliminar="$numeroEliminar" '{gsub(" "numeroEliminar" ", " "); print}')
+        cartasJugadores[$i]=$(echo "${cartasJugadores[$i]}" | nawk -v numeroEliminar="$numeroEliminar" 'BEGIN {
+    OFS=FS=" "
+}
+{
+    for (i=1; i<=NF; i++) {
+        if ($i != numeroEliminar) {
+            printf "%s%s", $i, (i<NF) ? OFS : ORS
+        }
+    }
+}')
+
+
     done
         
     if ((numeroEliminar >= 1 && numeroEliminar <= 10)); then
@@ -239,9 +250,17 @@ bucle_jugabilidad() {
 
     if $carta_valida; then
         eliminarCarta
-        if [ "${cartasJugadores[$((jugadorTurno-1))]}" == " " ]; then
+        if [ "${cartasJugadores[$((jugadorTurno-1))]}" == "" ]; then
             end_time=$(date +%s.%N)
-            elapsed_time=$(awk -v st="$start_time" -v et="$end_time" 'BEGIN { printf "%.6f", et - st }')
+            elapsed_time=$(echo "$start_time $end_time" | nawk '{
+    split($1, start_time, " ");
+    split($2, end_time, " ");
+    seconds = end_time[1] - start_time[1];
+    microseconds = end_time[2] - start_time[2];
+    elapsed_time = seconds + microseconds / 1000000;
+    printf("%.6f", elapsed_time);
+}')
+
             echo "Tiempo transcurrido: $elapsed_time segundos"
             sumarPuntos
             echo "EL JUGADOR $jugadorTurno HA GANADO LA PARTIDA CON $puntosGanador PUNTOS!!"
@@ -476,21 +495,34 @@ cargarDatosPartidaEnFicherolog(){
     fecha_actual=$(date +"%d/%m/%y")
     hora_actual=$(date +"%H:%M")
 
-
-    # Imprimir los datos en el archivo de registro en el formato deseado
-    echo -e "$fecha_actual|$hora_actual|$numJugadores|$elapsed_time|$jugadorTurno|$puntosGanador\n" >> "$log_file"
-    #Imprimir las cartas restantes de los jugadores y si no han jugado pones un * es decir JUGADOR1|JUGADOR2|JUGADOR3|JUGADOR4
-    echo -n "Cartas Jugadores: " >> "$log_file"
-
-    for ((i=0; i<$numJugadores; i++)); do
+    cartasRestantes=""
+    for ((i=0; i<4; i++)); do
         cartasJugador=${cartasJugadores[$i]}
         IFS=' ' read -ra cartasArray <<< "$cartasJugador"
-            echo -n "${cartasJugadores[$i]}|" >> "$log_file"
+        
+        if [ $i -lt $numJugadores ]; then
+            if [ ${#cartasArray[@]} -eq 0 ]; then
+                cartasRestantes+="   "
+            else
+                cartasRestantes+="${cartasJugadores[$i]}"
+            fi
+            # Agregar asteriscos para los jugadores que no han jugado
+        else
+            cartasRestantes+=" * "
+        fi
+        # Agregar un guion "-" entre los jugadores, excepto para el último jugador.
+        if [ $i -lt 3 ]; then
+            cartasRestantes+="-"
+        fi
     done
-    for((i=1; i<4-$numJugadores; i++)); do
-        echo -n "*|" >> "$log_file"
-    done
-    echo -e "\n\n" >> "$log_file"
+
+
+
+    # Imprimir los datos en el archivo de registro en el formato deseado
+    echo -e "$fecha_actual|$hora_actual|$numJugadores|$elapsed_time|$jugadorTurno|$puntosGanador|$cartasRestantes" >> "$log_file"
+    #Imprimir las cartas restantes de los jugadores y si no han jugado pones un * es decir JUGADOR1|JUGADOR2|JUGADOR3|JUGADOR4
+
+    
     read -p "Pulse INTRO para continuar..."
     show_menu
 
