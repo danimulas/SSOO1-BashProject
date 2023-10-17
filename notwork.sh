@@ -61,7 +61,6 @@ configure_game() {
 
     echo -e "Fecha|Hora|Jugadores|TiempoTotal|Ganador|Puntos\n" > "$log_file"
 
-
     echo -e "\nCONFIGURACIÓN ACTUALIZADA CORRECTAMENTE"
     read -p "Pulse INTRO para continuar..."
 }
@@ -75,6 +74,7 @@ barajarCartas() {
     for ((numero=1; numero<=40; numero++)); do
         cartas+=("$numero")
     done
+
 
 }
 
@@ -99,18 +99,17 @@ repartirCartas() {
     for ((i = 1; i <= numJugadores; i++)); do
         cartasJugadorActual=" "
 
-        if ((i <= cartasExtras)); then
-            cartasRepartir=$((cartasPorJugador + 1))
-        else
-            cartasRepartir=$cartasPorJugador
-        fi
-
-        for ((j = 1; j <= cartasRepartir; j++)); do
+        for ((j = 1; j <= cartasPorJugador; j++)); do
             carta=${cartas[((i - 1) * cartasPorJugador + j - 1)]}
             cartasJugadorActual+="$carta "
         done
         cartasJugadores+=("${cartasJugadorActual[@]}")
     done    
+
+    if ((cartasExtras > 0)); then
+        carta=${cartas[39]}
+        cartasJugadores[0]+="$carta "
+    fi
 }
 
 
@@ -202,7 +201,6 @@ turno() {
         pasar_turno
     while $jugar; do
         bucle_jugabilidad
-        read -p "Pulse INTRO para continuar..."
     done
     
     
@@ -252,18 +250,10 @@ bucle_jugabilidad() {
         eliminarCarta
         if [ "${cartasJugadores[$((jugadorTurno-1))]}" == "" ]; then
             end_time=$(date +%s.%N)
-            elapsed_time=$(echo "$start_time $end_time" | nawk '{
-    split($1, start_time, " ");
-    split($2, end_time, " ");
-    seconds = end_time[1] - start_time[1];
-    microseconds = end_time[2] - start_time[2];
-    elapsed_time = seconds + microseconds / 1000000;
-    printf("%.6f", elapsed_time);
-}')
-
-            echo "Tiempo transcurrido: $elapsed_time segundos"
+            elapsed_time=$(echo "$end_time - $start_time" | bc -l)
             sumarPuntos
             echo "EL JUGADOR $jugadorTurno HA GANADO LA PARTIDA CON $puntosGanador PUNTOS!!"
+            echo "LA PARTIDA HA DURADO $elapsed_time SEGUNDOS"
             cargarDatosPartidaEnFicherolog
             jugar=false
         else
@@ -521,7 +511,6 @@ cargarDatosPartidaEnFicherolog(){
     # Imprimir los datos en el archivo de registro en el formato deseado
     echo -e "$fecha_actual|$hora_actual|$numJugadores|$elapsed_time|$jugadorTurno|$puntosGanador|$cartasRestantes" >> "$log_file"
     #Imprimir las cartas restantes de los jugadores y si no han jugado pones un * es decir JUGADOR1|JUGADOR2|JUGADOR3|JUGADOR4
-
     
     read -p "Pulse INTRO para continuar..."
     show_menu
@@ -614,9 +603,14 @@ mostrarEstadisticas(){
 # Función para jugar una partida de 5illo
 play_game() {
     numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
+    # Comprobar si el número de jugadores es válido
+    if [[ ! $numJugadores =~ ^[2-4]$ ]]; then
+        echo "ERROR: El número de jugadores debe de ser 2, 3 o 4."
+        read -p "Pulse INTRO para continuar..."
+        return
+    fi
     echo "Comenzando una partida de 5illo con $numJugadores jugadores..."
     jugar
-    #read -p "Pulse INTRO para continuar..."
 }
 
 # Función para mostrar estadísticas
