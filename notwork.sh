@@ -288,17 +288,21 @@ jugar_manual(){
     imprimirCartas
 
     posibilidad=false
-
+    echo "Max mesa oros: $max_mesaOros Min mesa oros: $min_mesaOros"
+    echo "Max mesa copas: $max_mesaCopas Min mesa copas: $min_mesaCopas"
+    echo "Max mesa espadas: $max_mesaEspadas Min mesa espadas: $min_mesaEspadas"
+    echo "Max mesa bastos: $max_mesaBastos Min mesa bastos: $min_mesaBastos"
+    
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
         carta="${cartasNumeros[$i]}"
         if (
             [ "$carta" -eq "$((min_mesaOros - 1))" ] || [ "$carta" -eq "$((max_mesaOros + 1))" ] ||
-            ([ "$carta" -ge 11 ] && [ "$carta" -eq "$((min_mesaCopas - 1))" ]) ||
-            ([ "$carta" -le 20 ] && [ "$carta" -eq "$((max_mesaCopas + 1))" ]) ||
-            ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ]) ||
-            ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ]) ||
-            ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ]) ||
-            [ "$carta" -eq "$((max_mesaBastos + 1))" ] || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
+            ([ "$carta" -ge 11 ] && [ "$carta" -eq "$((min_mesaCopas - 1))" ] && [ "$carta" -ne 1 ])||
+            ([ "$carta" -le 20 ] && [ "$carta" -eq "$((max_mesaCopas + 1))" ] && [ "$carta" -ne 1 ])||
+            ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ] && [ "$carta" -ne 1 ])||
+            ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ] && [ "$carta" -ne 1 ])||
+            ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ] && [ "$carta" -ne 1 ])||
+            ([ "$carta" -eq "$((max_mesaBastos + 1))" ] && [ "$carta" -ne 1 ])|| [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
         ); then
             posibilidad=true
             break
@@ -314,12 +318,12 @@ jugar_manual(){
             if [ "$carta" -eq "$posicion" ]; then
                 if (
                     [ "$carta" -eq "$((min_mesaOros - 1))" ] || [ "$carta" -eq "$((max_mesaOros + 1))" ] ||
-                    ([ "$carta" -ge 11 ] && [ "$carta" -eq "$((min_mesaCopas - 1))" ]) ||
-                    ([ "$carta" -le 20 ] && [ "$carta" -eq "$((max_mesaCopas + 1))" ]) ||
-                    ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ]) ||
-                    ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ]) ||
-                    ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ]) ||
-                    [ "$carta" -eq "$((max_mesaBastos + 1))" ] || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
+                    ([ "$carta" -ge 11 ] && [ "$carta" -eq "$((min_mesaCopas - 1))" ] && [ "$carta" -ne 1 ])||
+                    ([ "$carta" -le 20 ] && [ "$carta" -eq "$((max_mesaCopas + 1))" ] && [ "$carta" -ge 11 ])||
+                    ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ])||
+                    ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ] && [ "$carta" -ge 21 ])||
+                    ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ])||
+                    ([ "$carta" -eq "$((max_mesaBastos + 1))" ] && [ "$carta" -ge 31 ])|| [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
                 ); then
                     numeroEliminar="$carta"
                     carta_valida=true
