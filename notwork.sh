@@ -510,20 +510,46 @@ calcularNumeroCartas(){
     numCopas=0
     numEspadas=0
     numBastos=0
+    maxDistanciaOros=0
+    maxDistanciaCopas=0
+    maxDistanciaEspadas=0
+    maxDistanciaBastos=0
+
+    # Calcula la distancia entre la carta más alta/baja de cada palo del 5
 
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
         carta="${cartasNumeros[$i]}"
+
         if [ "$carta" -ge 1 ] && [ "$carta" -le 10 ]; then
-            numOros=$((numOros+1))
+            distanciaOros=$(( (carta - 5) ))
+            distanciaOros=${distanciaOros#-}  # Valor absoluto
+            if [ "$distanciaOros" -gt "$maxDistanciaOros" ]; then
+                maxDistanciaOros="$distanciaOros"
+            fi
         fi
+
         if [ "$carta" -ge 11 ] && [ "$carta" -le 20 ]; then
-            numCopas=$((numCopas+1))
+            distanciaCopas=$(( (carta - 5) ))
+            distanciaCopas=${distanciaCopas#-}  # Valor absoluto
+            if [ "$distanciaCopas" -gt "$maxDistanciaCopas" ]; then
+                maxDistanciaCopas="$distanciaCopas"
+            fi
         fi
+
         if [ "$carta" -ge 21 ] && [ "$carta" -le 30 ]; then
-            numEspadas=$((numEspadas+1))
+            distanciaEspadas=$(( (carta - 5) ))
+            distanciaEspadas=${distanciaEspadas#-}  # Valor absoluto
+            if [ "$distanciaEspadas" -gt "$maxDistanciaEspadas" ]; then
+                maxDistanciaEspadas="$distanciaEspadas"
+            fi
         fi
+
         if [ "$carta" -ge 31 ] && [ "$carta" -le 40 ]; then
-            numBastos=$((numBastos+1))
+            distanciaBastos=$(( (carta - 5) ))
+            distanciaBastos=${distanciaBastos#-}  # Valor absoluto
+            if [ "$distanciaBastos" -gt "$maxDistanciaBastos" ]; then
+                maxDistanciaBastos="$distanciaBastos"
+            fi
         fi
     done
 
@@ -541,6 +567,7 @@ calcularNumeroCartas(){
         paloMayor="Bastos"
     fi
     
+    
 }
 
 
@@ -551,6 +578,25 @@ estrategia2(){
 
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
             carta="${cartasNumeros[$i]}"
+
+            if [ "$carta" -eq 15 ] && [ "$maxDistanciaCopas" -eq 4 ]; then
+                mesacopas=true
+                numeroEliminar="$carta"
+                carta_valida=true
+                return
+            fi
+
+            if [ "$carta" -eq 25 ] && [ "$maxDistanciaEspadas" -eq 4 ]; then
+                numeroEliminar="$carta"
+                carta_valida=true
+                return
+            fi
+
+            if [ "$carta" -eq 35 ] && [ "$maxDistanciaBastos" -eq 4 ]; then
+                numeroEliminar="$carta"
+                carta_valida=true
+                return
+            fi
 
             if [ "$carta" -eq 15 ] && [ "$paloMayor" = "Copas" ]; then
                 mesacopas=true
