@@ -3,15 +3,59 @@
 
 mostrarProgramadores() {
     cat << "EOF"
-    ┌─────────────────────────────────────────────────┐
-    │                 PROGRAMADORES                   │
-    ├─────────────────────────────────────────────────┤
-    │              Mario Prieta Sánchez               │
-    │              Daniel Mulas Fajardo               │
-    └─────────────────────────────────────────────────┘
+                 ┌─────────────────────────────────────────────────┐
+                 │                 PROGRAMADORES                   │
+                 ├─────────────────────────────────────────────────┤
+                 │              Mario Prieta Sánchez               │
+                 │              Daniel Mulas Fajardo               │
+                 └─────────────────────────────────────────────────┘
+                
+                
+
+
+EOF
+
+cat << "EOF"
+ ███████ ███████ ████████ ██████   █████  ████████ ███████  ██████  ██  █████  ███████ 
+ ██      ██         ██    ██   ██ ██   ██    ██    ██      ██       ██ ██   ██ ██      
+ █████   ███████    ██    ██████  ███████    ██    █████   ██   ███ ██ ███████ ███████ 
+ ██           ██    ██    ██   ██ ██   ██    ██    ██      ██    ██ ██ ██   ██      ██ 
+ ███████ ███████    ██    ██   ██ ██   ██    ██    ███████  ██████  ██ ██   ██ ███████ 
+ 
+EOF
+                                                                                      
+                                                                                
+cat << "EOF"
+    ┌─────────────────────────────────────────────────────────────────────────────┐
+    │                        ESTRATEGIA 1  (NIVEL FÁCIL)                          │
+    ├─────────────────────────────────────────────────────────────────────────────┤
+    │ La máquina juega primero las cartas de los palos que ya están sobre la mesa,│
+    │ y si no tiene ninguna carta de esos palos, juega la carta 5                 │
+    └─────────────────────────────────────────────────────────────────────────────┘
+EOF
+
+# Celda para Estrategia 2 (más grande)
+cat << "EOF"
+    ┌─────────────────────────────────────────────────────────────────────────────┐
+    │                        ESTRATEGIA 2  (NIVEL DIFÍCIL)                        │
+    ├─────────────────────────────────────────────────────────────────────────────┤
+    │ La máquina analiza sus cartas.                                              │
+    │    - Si tiene la carta 5 de algún palo, y además el 1, el 9 o el 10         │
+    │      de ese mismo palo, jugará la carta 5.                                  │    
+    │    - Si tiene la carta 5 de algún palo, y además tiene más número de cartas │
+    │      de ese palo que del resto, jugará la carta 5.                          │
+    │    - Si no cumple ninguna de las dos condiciones anteriores,                │
+    │      no jugará la carta 5 si es posible.                                    │
+    └─────────────────────────────────────────────────────────────────────────────┘
 EOF
 }
 
+mostrarEstrategias(){
+
+
+
+read -p "Pulse INTRO para continuar..."
+}
 
 comprobarArgumentos(){
     if [[ "$2" ]] || [[ "$1" ]] && [[ "$1" != "-g" ]]; then
@@ -19,10 +63,7 @@ comprobarArgumentos(){
         exit
     elif [[ "$1" = "-g" ]]; then
         mostrarProgramadores
-        echo "ESTRATEGIAS IMPLEMENTADAS"
-        echo "Estrategia 1: [Descripción de la estrategia 1]"
-        echo "Estrategia 2: [Descripción de la estrategia 2]"
-        exit
+        mostrarEstrategias
     fi
 }
 
@@ -217,6 +258,7 @@ turno() {
         eliminarCarta
         imprimirCartasIntro
         pasar_turno
+    $jugadas = 0
     while $jugar; do
         bucle_jugabilidad
         read -p "Pulse INTRO para continuar..."
@@ -260,7 +302,8 @@ bucle_jugabilidad() {
     else
         echo "ERROR: El archivo de configuración config.cfg no existe."
     fi
-    
+    jugadas=$((jugadas + 1))
+
     clear
     echo "Turno del jugador $jugadorTurno"
     # Obtener las cartas del jugador actual
@@ -286,6 +329,10 @@ bucle_jugabilidad() {
             2)
                 estrategia2
                 ;;
+            *)
+                echo "ERROR. La estrategia no es válida. Elije la estrategia [0, 1 o 2]."
+                read -p "Pulse INTRO para continuar..."
+                ;;
         esac
     fi
     
@@ -298,6 +345,7 @@ bucle_jugabilidad() {
             sumarPuntos
             echo "EL JUGADOR $jugadorTurno HA GANADO LA PARTIDA CON $puntosGanador PUNTOS!!"
             echo "LA PARTIDA HA DURADO $elapsed_time SEGUNDOS"
+            rondas=$(echo "scale=0; $jugadas / $numJugadores" | bc)
             cargarDatosPartidaEnFicherolog
             jugar=false
         else
@@ -571,7 +619,6 @@ calcularNumeroCartas(){
 }
 
 
-
 estrategia2(){
 
     calcularNumeroCartas
@@ -579,20 +626,20 @@ estrategia2(){
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
             carta="${cartasNumeros[$i]}"
 
-            if [ "$carta" -eq 15 ] && [ "$maxDistanciaCopas" -eq 4 ]; then
+            if [ "$carta" -eq 15 ] && ([ "$maxDistanciaCopas" -eq 4 ] || [ "$maxDistanciaCopas" -eq 5 ]); then
                 mesacopas=true
                 numeroEliminar="$carta"
                 carta_valida=true
                 return
             fi
 
-            if [ "$carta" -eq 25 ] && [ "$maxDistanciaEspadas" -eq 4 ]; then
+            if [ "$carta" -eq 25 ] && ([ "$maxDistanciaEspadas" -eq 4 ] || [ "$maxDistanciaEspadas" -eq 5 ]); then
                 numeroEliminar="$carta"
                 carta_valida=true
                 return
             fi
 
-            if [ "$carta" -eq 35 ] && [ "$maxDistanciaBastos" -eq 4 ]; then
+            if [ "$carta" -eq 35 ] && ([ "$maxDistanciaBastos" -eq 4 ] || [ "$maxDistanciaBastos" -eq 5 ]); then
                 numeroEliminar="$carta"
                 carta_valida=true
                 return
@@ -772,7 +819,7 @@ cargarDatosPartidaEnFicherolog(){
 
 
     # Imprimir los datos en el archivo de registro en el formato deseado
-    echo -e "$fecha_actual|$hora_actual|$numJugadores|$elapsed_time|$jugadorTurno|$puntosGanador|$cartasRestantes" >> "$log_file"
+    echo -e "$fecha_actual|$hora_actual|$numJugadores|$elapsed_time|$rondas|$jugadorTurno|$puntosGanador|$cartasRestantes" >> "$log_file"
     #Imprimir las cartas restantes de los jugadores y si no han jugado pones un * es decir JUGADOR1|JUGADOR2|JUGADOR3|JUGADOR4
     
     read -p "Pulse INTRO para continuar..."
@@ -781,6 +828,7 @@ cargarDatosPartidaEnFicherolog(){
 
 
 }
+
 calcular_estadisticas() {
     # Variables para almacenar las estadísticas
     # Definir la ruta del archivo de registro
@@ -790,78 +838,159 @@ calcular_estadisticas() {
     if [ ! -f "$log_file" ]; then
         echo "ERROR: El archivo de registro '$log_file' no existe."
         return
+    elif [ ! -s "$log_file" ]; then
+        echo "ERROR: El archivo de registro '$log_file' está vacío."
+        return
+    else
+        total_partidas=0
+        total_tiempo=0
+        total_puntos=0
+        partidas_ganadas_1=0
+        partidas_ganadas_2=0
+        partidas_ganadas_3=0
+        partidas_ganadas_4=0
+
+        # Leer el fichero de log línea por línea
+        while IFS='|' read -r fecha hora jugadores tiempo rondas ganador puntos cartas; do
+            # Calcular estadísticas
+            total_partidas=$((total_partidas + 1))
+            total_tiempo=$(bc -l <<< "$total_tiempo + $tiempo")
+            total_puntos=$(bc -l <<< "$total_puntos + $puntos")
+
+            # Verificar el jugador ganador y contar las partidas ganadas por cada jugador
+            case "$ganador" in
+                1)
+                    partidas_ganadas_1=$((partidas_ganadas_1 + 1))
+                    ;;
+                2)
+                    partidas_ganadas_2=$((partidas_ganadas_2 + 1))
+                    ;;
+                3)
+                    partidas_ganadas_3=$((partidas_ganadas_3 + 1))
+                    ;;
+                4)
+                    partidas_ganadas_4=$((partidas_ganadas_4 + 1))
+                    ;;
+            esac
+        done < "$1" # $1 es el nombre del fichero de log pasado como argumento
+
+        # Calcular medias y porcentajes
+        media_tiempo=$(bc -l <<< "$total_tiempo / $total_partidas")
+        media_puntos=$(bc -l <<< "$total_puntos / $total_partidas")
+        porcentaje_ganadas_1=$(bc -l <<< "($partidas_ganadas_1 / $total_partidas) * 100")
+        porcentaje_ganadas_2=$(bc -l <<< "($partidas_ganadas_2 / $total_partidas) * 100")
+        porcentaje_ganadas_3=$(bc -l <<< "($partidas_ganadas_3 / $total_partidas) * 100")
+        porcentaje_ganadas_4=$(bc -l <<< "($partidas_ganadas_4 / $total_partidas) * 100")
+
+        # Mostrar estadísticas
+        echo "Número total de partidas jugadas: $total_partidas"
+        echo "Media de los tiempos de todas las partidas jugadas: $media_tiempo"
+        echo "Tiempo total invertido en todas las partidas: $total_tiempo"
+        echo "Media de los puntos obtenidos por el ganador en todas las partidas: $media_puntos"
+        echo "Porcentaje de partidas ganadas del jugador 1: $porcentaje_ganadas_1%"
+        echo "Porcentaje de partidas ganadas del jugador 2: $porcentaje_ganadas_2%"
+        echo "Porcentaje de partidas ganadas del jugador 3: $porcentaje_ganadas_3%"
+        echo "Porcentaje de partidas ganadas del jugador 4: $porcentaje_ganadas_4%"
     fi
-    total_partidas=0
-    total_tiempo=0
-    total_puntos=0
-    partidas_ganadas_A=0
-    partidas_ganadas_B=0
-    partidas_ganadas_C=0
-    partidas_ganadas_D=0
+}
 
-    # Leer el fichero de log línea por línea
-    while IFS='|' read -r fecha hora jugadores tiempo turno puntos cartas; do
-        # Calcular estadísticas
-        total_partidas=$((total_partidas + 1))
-        total_tiempo=$(bc -l <<< "$total_tiempo + $tiempo")
-        total_puntos=$(bc -l <<< "$total_puntos + $puntos")
 
-        # Verificar el jugador ganador y contar las partidas ganadas por cada jugador
-        case "$turno" in
-            1)
-                partidas_ganadas_A=$((partidas_ganadas_A + 1))
-                ;;
-            2)
-                partidas_ganadas_B=$((partidas_ganadas_B + 1))
-                ;;
-            3)
-                partidas_ganadas_C=$((partidas_ganadas_C + 1))
-                ;;
-            4)
-                partidas_ganadas_D=$((partidas_ganadas_D + 1))
-                ;;
-        esac
+mostrar_partidas_destacadas() {
+    # Variables para almacenar los datos de las partidas destacadas
+    partida_mas_corta=""
+    partida_mas_larga=""
+    partida_mas_rondas=""
+    partida_menos_rondas=""
+    partida_mas_puntos=""
+    partida_mas_cartas=""
+
+    # Inicializar variables para comparaciones
+    duracion_corta=9999999
+    duracion_larga=0
+    max_rondas=0
+    min_rondas=9999999
+    max_puntos=0
+    max_cartas=0
+
+    while IFS='|' read -r fecha hora jugadores tiempo rondas ganador puntos cartas; do
+        # Comprobar si los valores son números enteros válidos
+        if [[ "$tiempo" =~ ^[0-9]+$ ]]; then
+            tiempo_int=$tiempo
+        else
+            tiempo_int=0
+        fi
+
+        if [[ "$rondas" =~ ^[0-9]+$ ]]; then
+            rondas_int=$rondas
+        else
+            rondas_int=0
+        fi
+
+        if [[ "$puntos" =~ ^[0-9]+$ ]]; then
+            puntos_int=$puntos
+        else
+            puntos_int=0
+        fi
+
+        if [[ "$cartas" =~ ^[0-9]+$ ]]; then
+            cartas_int=$cartas
+        else
+            cartas_int=0
+        fi
+
+        # Comprobar duración de la partida
+        if [ "$tiempo_int" -lt "$duracion_corta" ]; then
+            duracion_corta="$tiempo_int"
+            partida_mas_corta="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
+        fi
+        if [ "$tiempo_int" -gt "$duracion_larga" ]; then
+            duracion_larga="$tiempo_int"
+            partida_mas_larga="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
+        fi
+
+        # Comprobar número de rondas
+        if [ "$rondas_int" -gt "$max_rondas" ]; then
+            max_rondas="$rondas_int"
+            partida_mas_rondas="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
+        fi
+        if [ "$rondas_int" -lt "$min_rondas" ]; then
+            min_rondas="$rondas_int"
+            partida_menos_rondas="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
+        fi
+
+        # Comprobar número de puntos
+        if [ "$puntos_int" -gt "$max_puntos" ]; then
+            max_puntos="$puntos_int"
+            partida_mas_puntos="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
+        fi
+
+        # Comprobar número de cartas
+        if [ "$cartas_int" -gt "$max_cartas" ]; then
+            max_cartas="$cartas_int"
+            partida_mas_cartas="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
+        fi
     done < "$1" # $1 es el nombre del fichero de log pasado como argumento
 
-    # Calcular medias y porcentajes
-    media_tiempo=$(bc -l <<< "$total_tiempo / $total_partidas")
-    media_puntos=$(bc -l <<< "$total_puntos / $total_partidas")
-    porcentaje_ganadas_A=$(bc -l <<< "($partidas_ganadas_A / $total_partidas) * 100")
-    porcentaje_ganadas_B=$(bc -l <<< "($partidas_ganadas_B / $total_partidas) * 100")
-    porcentaje_ganadas_C=$(bc -l <<< "($partidas_ganadas_C / $total_partidas) * 100")
-    porcentaje_ganadas_D=$(bc -l <<< "($partidas_ganadas_D / $total_partidas) * 100")
-
-    # Mostrar estadísticas
-    echo "Número total de partidas jugadas: $total_partidas"
-    echo "Media de los tiempos de todas las partidas jugadas: $media_tiempo"
-    echo "Tiempo total invertido en todas las partidas: $total_tiempo"
-    echo "Media de los puntos obtenidos por el ganador en todas las partidas: $media_puntos"
-    echo "Porcentaje de partidas ganadas del jugador 1: $porcentaje_ganadas_A%"
-    echo "Porcentaje de partidas ganadas del jugador 2: $porcentaje_ganadas_B%"
-    echo "Porcentaje de partidas ganadas del jugador 3: $porcentaje_ganadas_C%"
-    echo "Porcentaje de partidas ganadas del jugador 4: $porcentaje_ganadas_D%"
+    # Mostrar los datos de las partidas destacadas
+    echo "Partida más corta:"
+    echo "$partida_mas_corta"
+    echo ""
+    echo "Partida más larga:"
+    echo "$partida_mas_larga"
+    echo ""
+    echo "Partida con más rondas:"
+    echo "$partida_mas_rondas"
+    echo ""
+    echo "Partida con menos rondas:"
+    echo "$partida_menos_rondas"
+    echo ""
+    echo "Partida con más puntos obtenidos por el ganador:"
+    echo "$partida_mas_puntos"
+    echo ""
+    echo "Partida en la que un jugador se ha quedado con mayor número de cartas:"
+    echo "$partida_mas_cartas"
 }
 
-calcularClasificacion() {
-        log_file="log/prueba.log"
-
-    # Verificar si el archivo de registro existe
-    if [ ! -f "$log_file" ]; then
-        echo "ERROR: El archivo de registro '$log_file' no existe."
-        return
-    fi
-
-    partida_mas_corta=$(nawk -F'|' '{if ($4 < min || NR == 1) min = $4} END {print min}' "$1")
-    partida_mas_larga=$(nawk -F'|' '{if ($4 > max) max = $4} END {print max}' "$1")
-    max_puntos_ganados=$(nawk -F'|' '{if ($6 > max) max = $6} END {print max}' "$1")
-    max_cartas_restantes=$(nawk -F'|' '{if ($7 > max) max = $7} END {print max}' "$1")
-
-    # Mostrar estadísticas de clasificación
-    echo "Partida más corta: $partida_mas_corta segundos"
-    echo "Partida más larga: $partida_mas_larga segundos"
-    echo "Partida con mayor número de puntos obtenidos por el ganador: $max_puntos_ganados puntos"
-    echo "Partida en la que un jugador se ha quedado con mayor número de cartas: $max_cartas_restantes cartas"
-}
 
 
 # Función para jugar una partida de 5illo
@@ -887,7 +1016,7 @@ show_statistics() {
 # Función para mostrar clasificación
 show_leaderboard() {
     # Implementa la lógica para mostrar la clasificación aquí
-    calcularClasificacion "log/prueba.log"
+    mostrar_partidas_destacadas "log/prueba.log"
     read -p "Pulse INTRO para continuar..."
 }
 
