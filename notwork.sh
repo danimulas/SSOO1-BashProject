@@ -90,32 +90,18 @@ barajarCartas() {
         numero=$((numero+1))
     done
 
-    # Obtener el número de elementos en el array
-    num_cartas=${#cartas[@]}
-
-    # Barajar el array de cartas en orden aleatorio
-    i=0
-    while [ $i -lt $num_cartas ]; do
-        # Generar un índice aleatorio utilizando /dev/random
-        random_bytes=$(od -An -N2 -i /dev/random)
-        random_index=$((random_bytes % num_cartas))
-
-        # Intercambiar la carta en la posición actual con la carta en el índice aleatorio
+    local i j tmp
+    for ((i=39; i>0; i--)); do
+        j=$((RANDOM % (i+1)))
         tmp=${cartas[i]}
-        cartas[i]=${cartas[random_index]}
-        cartas[random_index]=$tmp
-        i=$((i+1))
+        cartas[i]=${cartas[j]}
+        cartas[j]=$tmp
     done
 }
 
 
-
-
-
-# Función para repartir cartas a los jugadores
 repartirCartas() {
 
-    # Calcular la cantidad de cartas por jugador
     local cartasPorJugador=$((40 / numJugadores))
     local cartasExtras=$((40 % numJugadores)) 
 
@@ -261,6 +247,20 @@ find_max() {
 
 
 bucle_jugabilidad() {
+    #comprobar que existe el fichero de configuración, si existe leer la estrategia del fichero de configuracion y si no existe, avisar al usuario
+    if [ -f "config.cfg" ]; then
+        # Leer la configuración del archivo config.cfg
+        source "config.cfg"
+        # Verificar si la variable ESTRATEGIA está definida en la configuración
+        if [ -n "$ESTRATEGIA" ]; then
+            estrategia="$ESTRATEGIA"
+        else
+            echo "ERROR: La variable ESTRATEGIA no está definida en el archivo config.cfg"
+        fi
+    else
+        echo "ERROR: El archivo de configuración config.cfg no existe."
+    fi
+    
     clear
     echo "Turno del jugador $jugadorTurno"
     # Obtener las cartas del jugador actual
@@ -275,7 +275,16 @@ bucle_jugabilidad() {
     if [ "$jugadorTurno" -eq "1" ]; then
         jugar_manual
     else
-        decidirCarta
+        # Escoger la estrategia dependiendo del valor de la variable estrategia
+        case "$estrategia" in
+            0)
+                estrategia0
+                ;;
+            1)
+                estrategia1
+                ;;
+            
+        esac
     fi
     
 
@@ -384,7 +393,7 @@ jugar_manual(){
     fi
 }
 
-decidirCarta(){
+estrategia0(){
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
             carta="${cartasNumeros[$i]}"
             
@@ -435,6 +444,64 @@ decidirCarta(){
             fi
         done
 }
+
+#Consiste en que si tienes alguna carta para jugar que no sea 5, la juegas, si no tienes ninguna carta para jugar, juegas la 5
+estrategia1(){
+    for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
+            carta="${cartasNumeros[$i]}"
+
+            if ( [ "$carta" -le 10 ] && [ "$carta" -eq "$((max_mesaOros + 1))" ] )|| [ "$carta" -eq "$((min_mesaOros - 1))" ] ; then
+                numeroEliminar="$carta"
+                carta_valida=true
+                return
+            fi
+            if [ "$carta" -eq "$((min_mesaCopas - 1))" ] || [ "$carta" -eq "$((max_mesaCopas + 1))" ]; then
+                if [ "$carta" -ge 11 ] && [ "$carta" -le 20 ]; then
+                    numeroEliminar="$carta"
+                    carta_valida=true
+                    return
+                fi
+            fi
+            if [ "$carta" -eq "$((min_mesaEspadas - 1))" ] || [ "$carta" -eq "$((max_mesaEspadas + 1))" ]; then
+                if [ "$carta" -ge 21 ] && [ "$carta" -le 30 ]; then
+                    numeroEliminar="$carta"
+                    carta_valida=true
+                    return
+                fi
+            fi
+            if [ "$carta" -eq "$((min_mesaBastos - 1))" ] || [ "$carta" -eq "$((max_mesaBastos + 1))" ]; then
+                if [ "$carta" -ge 31 ] && [ "$carta" -le 40 ]; then
+                    numeroEliminar="$carta"
+                    carta_valida=true
+                    return
+                fi
+            fi
+           
+    done
+
+    for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
+        carta="${cartasNumeros[$i]}"
+        if [ "$carta" -eq 15 ]; then
+            mesacopas=true
+            numeroEliminar="$carta"
+            carta_valida=true
+            return
+        fi
+
+        if [ "$carta" -eq 25 ]; then
+            numeroEliminar="$carta"
+            carta_valida=true
+            return
+        fi
+
+        if [ "$carta" -eq 35 ]; then
+            numeroEliminar="$carta"
+            carta_valida=true
+            return
+        fi
+    done
+}
+
 jugar(){
     start_time=$(date +%s.%N)
     repartirCartas
