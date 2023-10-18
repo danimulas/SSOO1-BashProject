@@ -45,7 +45,7 @@ J)JUGAR
 E)ESTADISTICAS
 F)CLASIFICACION
 S)SALIR"
-    echo "Introduzca una opción >>"
+    echo "“5illo”. Introduzca una opción >>"
 }
 
 # Función para cambiar la configuración
@@ -283,7 +283,9 @@ bucle_jugabilidad() {
             1)
                 estrategia1
                 ;;
-            
+            2)
+                estrategia2
+                ;;
         esac
     fi
     
@@ -352,8 +354,7 @@ jugar_manual(){
             ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ] && [ "$carta" -ne 1 ])||
             ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ] && [ "$carta" -ne 1 ])||
             ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ] && [ "$carta" -ne 1 ])||
-            ([ "$carta" -eq "$((max_mesaBastos + 1))" ] && [ "$carta" -ne 1 ])|| [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
-        ); then
+            ([ "$carta" -eq "$((max_mesaBastos + 1))" ] && [ "$carta" -ne 1 ])|| [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]); then
             posibilidad=true
             break
         fi
@@ -373,8 +374,7 @@ jugar_manual(){
                     ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ])||
                     ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ] && [ "$carta" -ge 21 ])||
                     ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ])||
-                    ([ "$carta" -eq "$((max_mesaBastos + 1))" ] && [ "$carta" -ge 31 ])|| [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
-                ); then
+                    ([ "$carta" -eq "$((max_mesaBastos + 1))" ] && [ "$carta" -ge 31 ])|| [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]); then
                     numeroEliminar="$carta"
                     carta_valida=true
                     break
@@ -401,45 +401,45 @@ estrategia0(){
                 mesacopas=true
                 numeroEliminar="$carta"
                 carta_valida=true
-                break
+                return
             fi
 
             if [ "$carta" -eq 25 ]; then
                 numeroEliminar="$carta"
                 carta_valida=true
-                break
+                return
             fi
 
             if [ "$carta" -eq 35 ]; then
                 numeroEliminar="$carta"
                 carta_valida=true
-                break
+                return
             fi
 
             if ( [ "$carta" -le 10 ] && [ "$carta" -eq "$((max_mesaOros + 1))" ] )|| [ "$carta" -eq "$((min_mesaOros - 1))" ] ; then
                 numeroEliminar="$carta"
                 carta_valida=true
-                break
+                return
             fi
             if [ "$carta" -eq "$((min_mesaCopas - 1))" ] || [ "$carta" -eq "$((max_mesaCopas + 1))" ]; then
                 if [ "$carta" -ge 11 ] && [ "$carta" -le 20 ]; then
                     numeroEliminar="$carta"
                     carta_valida=true
-                    break
+                    return
                 fi
             fi
             if [ "$carta" -eq "$((min_mesaEspadas - 1))" ] || [ "$carta" -eq "$((max_mesaEspadas + 1))" ]; then
                 if [ "$carta" -ge 21 ] && [ "$carta" -le 30 ]; then
                     numeroEliminar="$carta"
                     carta_valida=true
-                    break
+                    return
                 fi
             fi
             if [ "$carta" -eq "$((min_mesaBastos - 1))" ] || [ "$carta" -eq "$((max_mesaBastos + 1))" ]; then
                 if [ "$carta" -ge 31 ] && [ "$carta" -le 40 ]; then
                     numeroEliminar="$carta"
                     carta_valida=true
-                    break
+                    return
                 fi
             fi
         done
@@ -447,8 +447,129 @@ estrategia0(){
 
 #Consiste en que si tienes alguna carta para jugar que no sea 5, la juegas, si no tienes ninguna carta para jugar, juegas la 5
 estrategia1(){
+    
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
             carta="${cartasNumeros[$i]}"
+
+            if ( [ "$carta" -le 10 ] && [ "$carta" -eq "$((max_mesaOros + 1))" ] )|| [ "$carta" -eq "$((min_mesaOros - 1))" ] ; then
+                numeroEliminar="$carta"
+                carta_valida=true
+                return
+            fi
+            if [ "$carta" -eq "$((min_mesaCopas - 1))" ] || [ "$carta" -eq "$((max_mesaCopas + 1))" ]; then
+                if [ "$carta" -ge 11 ] && [ "$carta" -le 20 ]; then
+                    numeroEliminar="$carta"
+                    carta_valida=true
+                    return
+                fi
+            fi
+            if [ "$carta" -eq "$((min_mesaEspadas - 1))" ] || [ "$carta" -eq "$((max_mesaEspadas + 1))" ]; then
+                if [ "$carta" -ge 21 ] && [ "$carta" -le 30 ]; then
+                    numeroEliminar="$carta"
+                    carta_valida=true
+                    return
+                fi
+            fi
+            if [ "$carta" -eq "$((min_mesaBastos - 1))" ] || [ "$carta" -eq "$((max_mesaBastos + 1))" ]; then
+                if [ "$carta" -ge 31 ] && [ "$carta" -le 40 ]; then
+                    numeroEliminar="$carta"
+                    carta_valida=true
+                    return
+                fi
+            fi
+           
+    done
+
+    for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
+        carta="${cartasNumeros[$i]}"
+        if [ "$carta" -eq 15 ]; then
+            mesacopas=true
+            numeroEliminar="$carta"
+            carta_valida=true
+            return
+        fi
+
+        if [ "$carta" -eq 25 ]; then
+            numeroEliminar="$carta"
+            carta_valida=true
+            return
+        fi
+
+        if [ "$carta" -eq 35 ]; then
+            numeroEliminar="$carta"
+            carta_valida=true
+            return
+        fi
+    done
+}
+
+#Funcion que calcule el numero de cartas de cada palo que tiene el jugador actual y lo almacene en una variable para cada palo
+calcularNumeroCartas(){
+
+    numOros=0
+    numCopas=0
+    numEspadas=0
+    numBastos=0
+
+    for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
+        carta="${cartasNumeros[$i]}"
+        if [ "$carta" -ge 1 ] && [ "$carta" -le 10 ]; then
+            numOros=$((numOros+1))
+        fi
+        if [ "$carta" -ge 11 ] && [ "$carta" -le 20 ]; then
+            numCopas=$((numCopas+1))
+        fi
+        if [ "$carta" -ge 21 ] && [ "$carta" -le 30 ]; then
+            numEspadas=$((numEspadas+1))
+        fi
+        if [ "$carta" -ge 31 ] && [ "$carta" -le 40 ]; then
+            numBastos=$((numBastos+1))
+        fi
+    done
+
+    #Comparar el numero de cartas de cada palo y quedarse con el palo que mas cartas tenga
+    if [ "$numOros" -gt "$numCopas" ] && [ "$numOros" -gt "$numEspadas" ] && [ "$numOros" -gt "$numBastos" ]; then
+        paloMayor="Oros"
+    fi
+    if [ "$numCopas" -gt "$numOros" ] && [ "$numCopas" -gt "$numEspadas" ] && [ "$numCopas" -gt "$numBastos" ]; then
+        paloMayor="Copas"
+    fi
+    if [ "$numEspadas" -gt "$numOros" ] && [ "$numEspadas" -gt "$numCopas" ] && [ "$numEspadas" -gt "$numBastos" ]; then
+        paloMayor="Espadas"
+    fi
+    if [ "$numBastos" -gt "$numOros" ] && [ "$numBastos" -gt "$numCopas" ] && [ "$numBastos" -gt "$numEspadas" ]; then
+        paloMayor="Bastos"
+    fi
+    
+}
+
+
+
+estrategia2(){
+
+    calcularNumeroCartas
+
+    for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
+            carta="${cartasNumeros[$i]}"
+
+            if [ "$carta" -eq 15 ] && [ "$paloMayor" = "Copas" ]; then
+                mesacopas=true
+                numeroEliminar="$carta"
+                carta_valida=true
+                return
+            fi
+
+            if [ "$carta" -eq 25 ] && [ "$paloMayor" = "Espadas" ]; then
+                numeroEliminar="$carta"
+                carta_valida=true
+                return
+            fi
+
+            if [ "$carta" -eq 35 ] && [ "$paloMayor" = "Bastos" ]; then
+                numeroEliminar="$carta"
+                carta_valida=true
+                return
+            fi
 
             if ( [ "$carta" -le 10 ] && [ "$carta" -eq "$((max_mesaOros + 1))" ] )|| [ "$carta" -eq "$((min_mesaOros - 1))" ] ; then
                 numeroEliminar="$carta"
