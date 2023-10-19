@@ -88,6 +88,46 @@ F)CLASIFICACION
 S)SALIR"
     echo "“5illo”. Introduzca una opción >>"
 }
+#!/bin/bash
+
+# Definir la función
+leerFicherolog() {
+    # Verificar si el archivo config.cfg existe
+    if [ -e "config.cfg" ]; then
+        # Leer la línea que contiene "LOG="
+        linea=$(grep "LOG=" config.cfg)
+
+        # Extraer el valor después del "="
+        log_file=${linea#*=}
+        echo "El valor de log_file es: $log_file"
+    else
+        echo "El archivo config.cfg no existe."
+    fi
+}
+
+
+guardarFicherolog() {
+    # Obtener el valor de log_file
+    leerFicherolog
+
+    # Verificar si log_file está definido
+    while true; do
+        if [ -n "$log_file" ]; then
+            # Comprobar si la ruta de destino existe y es un directorio
+            if [ -d "$log_file" ]; then
+                # Guardar el archivo fichero.log en la ruta de destino
+                echo "Guardando fichero.log en $log_file"
+                touch "$log_file/fichero.log"
+                break  # Salir del bucle cuando se haya guardado el archivo
+            else
+                read -p "La ruta de destino no es un directorio válido. Introduzca una ruta válida: " log_file
+            fi
+        else
+            echo "El valor de log_file no está definido."
+            break  # Salir del bucle si log_file no está definido
+        fi
+    done
+}
 
 # Función para cambiar la configuración
 configure_game() {
@@ -105,15 +145,18 @@ configure_game() {
         read -p "Por favor, introduzca una estrategia válida (0, 1 o 2): " estrategia
     done
 
-    read -p "Nombre del archivo de log (sin la extensión .log): " log_filename
-
-    # Ruta completa del archivo de log
-    log_file="$log_directory/$log_filename.log"
+    read -p "Introduce la ruta del fichero de log: " log_file
+    while [[ ! -d "$log_file" ]]; do
+        read -p "Por favor, introduzca una ruta válida: " log_file
+    done
 
     # Actualizar configuración
     echo "JUGADORES=$jugadores" > config.cfg
     echo "ESTRATEGIA=$estrategia" >> config.cfg
     echo "LOG=$log_file" >> config.cfg
+
+    #guardarFicherolog en la ruta especificada
+    guardarFicherolog
 
     echo -e "\nCONFIGURACIÓN ACTUALIZADA CORRECTAMENTE"
     read -p "Pulse INTRO para continuar..."
@@ -819,7 +862,7 @@ cargarDatosPartidaEnFicherolog(){
 
 
     # Imprimir los datos en el archivo de registro en el formato deseado
-    echo -e "$fecha_actual|$hora_actual|$numJugadores|$elapsed_time|$rondas|$jugadorTurno|$puntosGanador|$cartasRestantes" >> "$log_file"
+    echo -e "$fecha_actual|$hora_actual|$numJugadores|$elapsed_time|$rondas|$jugadorTurno|$puntosGanador|$cartasRestantes" >> "$log_file/fichero.log"
     #Imprimir las cartas restantes de los jugadores y si no han jugado pones un * es decir JUGADOR1|JUGADOR2|JUGADOR3|JUGADOR4
     
     read -p "Pulse INTRO para continuar..."
@@ -996,6 +1039,7 @@ mostrar_partidas_destacadas() {
 # Función para jugar una partida de 5illo
 play_game() {
     numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
+
     # Comprobar si el número de jugadores es válido
     if [[ ! $numJugadores =~ ^[2-4]$ ]]; then
         echo "ERROR: El número de jugadores debe de ser 2, 3 o 4."
