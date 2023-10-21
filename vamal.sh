@@ -67,7 +67,7 @@ comprobarArgumentos(){
 
 
 # Función para mostrar el menú principal
-show_menu() {
+showMenu() {
     clear
     echo "                                                       
  _____ _ _ _       
@@ -97,9 +97,19 @@ leerFicheroLog() {
 
         # Extraer el valor después del "=" y almacenarlo en rutaFicheroLog
         rutaFicheroLog=${linea#*=}
+        #Comprobar si existe el directorio, si no existe, advertir al usuario
+        if [ -d "$rutaFicheroLog" ]; then
+            # Crear la ruta completa del archivo de registro
+            ficheroLog="$rutaFicheroLog/fichero.log"
+        else
+            echo "ERROR: El directorio $rutaFicheroLog no existe."
+        fi
 
-        # Crear la ruta completa del archivo de registro
-        ficheroLog="$rutaFicheroLog/fichero.log"
+        # Verificar si el archivo de registro existe, si no existe, advertir al usuario
+        if ! [ -f "$ficheroLog" ]; then
+
+            echo "ERROR: El archivo de registro $ficheroLog no existe."
+        fi
 
     else
         echo "El archivo config.cfg no existe."
@@ -108,7 +118,7 @@ leerFicheroLog() {
 
 
 # Función para cambiar la configuración
-configure_game() {
+changeConfig() {
     echo "Configuración actual:"
     cat config.cfg
     log_directory="log"  # Directorio fijo llamado "log"
@@ -144,13 +154,13 @@ barajarCartas() {
 
     # Generar todas las cartas con números del 1 al 40
     numero=1
-    while [ $numero -le 10 ]; do
+    while [ $numero -le 40 ]; do
         cartas+=("$numero")
         numero=$((numero+1))
     done
 
     local i j tmp
-    for ((i=9; i>0; i--)); do
+    for ((i=39; i>0; i--)); do
         j=$((RANDOM % (i+1)))
         tmp=${cartas[i]}
         cartas[i]=${cartas[j]}
@@ -161,8 +171,8 @@ barajarCartas() {
 
 repartirCartas() {
 
-    local cartasPorJugador=$((10 / numJugadores))
-    local cartasExtras=$((10 % numJugadores)) 
+    local cartasPorJugador=$((40 / numJugadores))
+    local cartasExtras=$((40 % numJugadores)) 
 
     barajarCartas
 
@@ -184,7 +194,7 @@ repartirCartas() {
     done    
 
     if ((cartasExtras > 0)); then
-        carta=${cartas[9]}
+        carta=${cartas[39]}
         cartasJugadores[0]+="$carta "
     fi
 }
@@ -218,15 +228,15 @@ imprimirCartas(){
 eliminarCarta() {
     for ((i = 0; i < ${#cartasJugadores[@]}; i++)); do
         cartasJugadores[$i]=$(echo "${cartasJugadores[$i]}" | nawk -v numeroEliminar="$numeroEliminar" 'BEGIN {
-    OFS=FS=" "
-}
-{
-    for (i=1; i<=NF; i++) {
-        if ($i != numeroEliminar) {
-            printf "%s%s", $i, (i<NF) ? OFS : ORS
-        }
-    }
-}')
+                                                                                                            OFS=FS=" "
+                                                                                                        }
+                                                                                                        {
+                                                                                                            for (i=1; i<=NF; i++) {
+                                                                                                                if ($i != numeroEliminar) {
+                                                                                                                    printf "%s%s", $i, (i<NF) ? OFS : ORS
+                                                                                                                }
+                                                                                                            }
+                                                                                                        }')
 
 
     done
@@ -279,7 +289,9 @@ turno() {
     $jugadas = 0
     while $jugar; do
         bucle_jugabilidad
+        #HACER FUNCION PARA CALCULAR LOS PUESTOS DE LOS JUGADORES
         read -p "Pulse INTRO para continuar..."
+        showMenu
     done
     
     
@@ -358,8 +370,8 @@ bucle_jugabilidad() {
     if $carta_valida; then
         eliminarCarta
         if [ "${cartasJugadores[$((jugadorTurno-1))]}" == "" ]; then
-            end_time=$(date -u "end_time" +%s)
-            elapsed_time=$(echo "$end_time - $start_time" | /usr/bin/bc)
+            TIEMPO_FINAL=$SECONDS
+            elapsed_time=$((TIEMPO_FINAL - TIEMPO_INICIAL))
             sumarPuntos
             echo "EL JUGADOR $jugadorTurno HA GANADO LA PARTIDA CON $puntosGanador PUNTOS!!"
             echo "LA PARTIDA HA DURADO $elapsed_time SEGUNDOS"
@@ -734,8 +746,17 @@ estrategia2(){
     done
 }
 
-jugar(){
-    start_time=$(date -u "start_time" +%s)
+play(){
+    TIEMPO_INICIAL=$SECONDS
+    numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
+
+    # Comprobar si el número de jugadores es válido
+    if [[ ! $numJugadores =~ ^[2-4]$ ]]; then
+        echo "ERROR: El número de jugadores debe de ser 2, 3 o 4."
+        read -p "Pulse INTRO para continuar..."
+        return
+    fi
+    echo "Comenzando una partida de 5illo con $numJugadores jugadores..."
     repartirCartas
     turno
     
@@ -828,17 +849,13 @@ cargarDatosPartidaEnFicherolog(){
     # Obtener el nombre del fichero de log
     leerFicheroLog
     # Imprimir los datos en el archivo de registro en el formato deseado
-    echo -e "$fecha_actual|$hora_actual|$numJugadores|$elapsed_time|$rondas|$jugadorTurno|$puntosGanador|$cartasRestantes" >> "$ficheroLog"
+    echo -e "$fecha_actual|$hora_actual|$numJugadores|$elapsed_time|$rondas|$jugadorTurno|$puntosGanador|$cartasRestantes">> "$ficheroLog"
     #Imprimir las cartas restantes de los jugadores y si no han jugado pones un * es decir JUGADOR1|JUGADOR2|JUGADOR3|JUGADOR4
-    
-    read -p "Pulse INTRO para continuar..."
-    show_menu
-
 
 
 }
 
-calcular_estadisticas() {
+calculateStatistics() {
 
     total_partidas=0
     total_tiempo=0
@@ -892,7 +909,7 @@ calcular_estadisticas() {
 }
 
 
-mostrar_partidas_destacadas() {
+calculateLeaderboard() {
     # Variables para almacenar los datos de las partidas destacadas
     partida_mas_corta=""
     partida_mas_larga=""
@@ -929,11 +946,25 @@ mostrar_partidas_destacadas() {
             puntos_int=0
         fi
 
-        if [[ "$cartas" =~ ^[0-9]+$ ]]; then
-            cartas_int=$cartas
-        else
-            cartas_int=0
+        # Procesar cartas
+        cartas_int=0
+        cartasMax=0
+        if [[ "$cartas" != "-" && "$cartas" != *" * "* ]]; then
+            IFS="-" read -ra jugadores_cartas <<< "$cartas"
+            for jugador_cartas in "${jugadores_cartas[@]}"; do
+                cartas_array=($jugador_cartas)
+                cartas_int=0
+                for carta in "${cartas_array[@]}"; do
+                    if [[ "$carta" =~ ^[0-9]+$ ]]; then
+                        cartas_int=$((cartas_int + 1))
+                    fi
+                    if [ "$cartas_int" -gt "$cartasMax" ]; then
+                        cartasMax="$cartas_int"
+                    fi
+                done
+            done
         fi
+
 
         # Comprobar duración de la partida
         if [ "$tiempo_int" -lt "$duracion_corta" ]; then
@@ -962,8 +993,8 @@ mostrar_partidas_destacadas() {
         fi
 
         # Comprobar número de cartas
-        if [ "$cartas_int" -gt "$max_cartas" ]; then
-            max_cartas="$cartas_int"
+        if [ "$cartasMax" -gt "$max_cartas" ]; then
+            max_cartas="$cartasMax"
             partida_mas_cartas="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
         fi
     done < "$1" # $1 es el nombre del fichero de log pasado como argumento
@@ -990,58 +1021,59 @@ mostrar_partidas_destacadas() {
 
 
 
-# Función para jugar una partida de 5illo
-play_game() {
-    numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
-
-    # Comprobar si el número de jugadores es válido
-    if [[ ! $numJugadores =~ ^[2-4]$ ]]; then
-        echo "ERROR: El número de jugadores debe de ser 2, 3 o 4."
-        read -p "Pulse INTRO para continuar..."
-        return
-    fi
-    echo "Comenzando una partida de 5illo con $numJugadores jugadores..."
-    jugar
-}
-
 # Función para mostrar estadísticas
-show_statistics() {
-    # Implementa la lógica para mostrar estadísticas aquí
+showStatistics() {
+    cat << "EOF"
+███████ ███████ ████████  █████  ██████  ██ ███████ ████████ ██  ██████  █████  ███████ 
+██      ██         ██    ██   ██ ██   ██ ██ ██         ██    ██ ██      ██   ██ ██      
+█████   ███████    ██    ███████ ██   ██ ██ ███████    ██    ██ ██      ███████ ███████ 
+██           ██    ██    ██   ██ ██   ██ ██      ██    ██    ██ ██      ██   ██      ██ 
+███████ ███████    ██    ██   ██ ██████  ██ ███████    ██    ██  ██████ ██   ██ ███████ 
+
+EOF
     leerFicheroLog
-    calcular_estadisticas "$ficheroLog"
+    calculateStatistics "$ficheroLog"
     read -p "Pulse INTRO para continuar..."
 }
 
-# Función para mostrar clasificación
-show_leaderboard() {
-    # Implementa la lógica para mostrar la clasificación aquí
+
+showLeaderboard() {
+    cat << "EOF"
+ ██████ ██       █████  ███████ ██ ███████ ██  ██████  █████   ██████ ██  ██████  ███    ██ 
+██      ██      ██   ██ ██      ██ ██      ██ ██      ██   ██ ██      ██ ██    ██ ████   ██ 
+██      ██      ███████ ███████ ██ █████   ██ ██      ███████ ██      ██ ██    ██ ██ ██  ██ 
+██      ██      ██   ██      ██ ██ ██      ██ ██      ██   ██ ██      ██ ██    ██ ██  ██ ██ 
+ ██████ ███████ ██   ██ ███████ ██ ██      ██  ██████ ██   ██  ██████ ██  ██████  ██   ████ 
+                                                                                            
+
+EOF
     leerFicheroLog
-    mostrar_partidas_destacadas "$ficheroLog"
+    calculateLeaderboard "$ficheroLog"
     read -p "Pulse INTRO para continuar..."
 }
 
 # Bucle principal
 while true; do
 comprobarArgumentos "$*"
-    show_menu
+    showMenu
     read option
 
     case $option in
         C|c)
             clear
-            configure_game
+            changeConfig
             ;;
         J|j)
             clear
-            play_game
+            play
             ;;
         E|e)
             clear
-            show_statistics
+            showStatistics
             ;;
         F|f)
             clear
-            show_leaderboard
+            showLeaderboard
             ;;
         S|s)
             echo "Saliendo del juego. ¡Hasta luego!"
