@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-mostrarProgramadores() {
+mostrarProgramadoresEstrategias() {
     cat << "EOF"
                  ┌─────────────────────────────────────────────────┐
                  │                 PROGRAMADORES                   │
@@ -48,25 +48,11 @@ cat << "EOF"
     │      no jugará la carta 5 si es posible.                                    │
     └─────────────────────────────────────────────────────────────────────────────┘
 EOF
+
 read -p "Pulse INTRO para continuar..."
 }
 
-leerFicheroLog() {
-    # Verificar si el archivo config.cfg existe
-    if [ -e "config.cfg" ]; then
-        # Leer la línea que contiene "LOG="
-        linea=$(grep "LOG=" config.cfg)
 
-        # Extraer el valor después del "=" y almacenarlo en rutaFicheroLog
-        rutaFicheroLog=${linea#*=}
-
-        # Crear la ruta completa del archivo de registro
-        ficheroLog="$rutaFicheroLog/fichero.log"
-
-    else
-        echo "El archivo config.cfg no existe."
-    fi
-}
 
 
 comprobarArgumentos(){
@@ -74,8 +60,7 @@ comprobarArgumentos(){
         echo -e "ERROR: Para ejecutar el programa escribe 'domino.sh [-g]'."
         exit
     elif [[ "$1" = "-g" ]]; then
-        mostrarProgramadores
-        mostrarEstrategias
+        mostrarProgramadoresEstrategias
     fi
 }
 
@@ -100,6 +85,27 @@ F)CLASIFICACION
 S)SALIR"
     echo "“5illo”. Introduzca una opción >>"
 }
+#!/bin/bash
+
+# Definir la función
+
+leerFicheroLog() {
+    # Verificar si el archivo config.cfg existe
+    if [ -e "config.cfg" ]; then
+        # Leer la línea que contiene "LOG="
+        linea=$(grep "LOG=" config.cfg)
+
+        # Extraer el valor después del "=" y almacenarlo en rutaFicheroLog
+        rutaFicheroLog=${linea#*=}
+
+        # Crear la ruta completa del archivo de registro
+        ficheroLog="$rutaFicheroLog/fichero.log"
+
+    else
+        echo "El archivo config.cfg no existe."
+    fi
+}
+
 
 # Función para cambiar la configuración
 configure_game() {
@@ -117,15 +123,15 @@ configure_game() {
         read -p "Por favor, introduzca una estrategia válida (0, 1 o 2): " estrategia
     done
 
-    read -p "Nombre del archivo de log (sin la extensión .log): " log_filename
-
-    # Ruta completa del archivo de log
-    log_file="$log_directory/$log_filename.log"
+    read -p "Introduce la ruta del fichero de log: " rutaFicheroLog
+    while [[ ! -d "$rutaFicheroLog" ]]; do
+        read -p "Por favor, introduzca una ruta válida: " rutaFicheroLog
+    done
 
     # Actualizar configuración
     echo "JUGADORES=$jugadores" > config.cfg
     echo "ESTRATEGIA=$estrategia" >> config.cfg
-    echo "LOG=$log_file" >> config.cfg
+    echo "LOG=$rutaFicheroLog" >> config.cfg
 
     echo -e "\nCONFIGURACIÓN ACTUALIZADA CORRECTAMENTE"
     read -p "Pulse INTRO para continuar..."
@@ -138,13 +144,13 @@ barajarCartas() {
 
     # Generar todas las cartas con números del 1 al 40
     numero=1
-    while [ $numero -le 40 ]; do
+    while [ $numero -le 10 ]; do
         cartas+=("$numero")
         numero=$((numero+1))
     done
 
     local i j tmp
-    for ((i=39; i>0; i--)); do
+    for ((i=9; i>0; i--)); do
         j=$((RANDOM % (i+1)))
         tmp=${cartas[i]}
         cartas[i]=${cartas[j]}
@@ -155,8 +161,8 @@ barajarCartas() {
 
 repartirCartas() {
 
-    local cartasPorJugador=$((40 / numJugadores))
-    local cartasExtras=$((40 % numJugadores)) 
+    local cartasPorJugador=$((10 / numJugadores))
+    local cartasExtras=$((10 % numJugadores)) 
 
     barajarCartas
 
@@ -178,7 +184,7 @@ repartirCartas() {
     done    
 
     if ((cartasExtras > 0)); then
-        carta=${cartas[39]}
+        carta=${cartas[9]}
         cartasJugadores[0]+="$carta "
     fi
 }
@@ -352,8 +358,8 @@ bucle_jugabilidad() {
     if $carta_valida; then
         eliminarCarta
         if [ "${cartasJugadores[$((jugadorTurno-1))]}" == "" ]; then
-            end_time=$(date +%s.%N)
-            elapsed_time=$(echo "$end_time - $start_time" | bc -l)
+            end_time=$(date -u "end_time" +%s)
+            elapsed_time=$(echo "$end_time - $start_time" | /usr/bin/bc)
             sumarPuntos
             echo "EL JUGADOR $jugadorTurno HA GANADO LA PARTIDA CON $puntosGanador PUNTOS!!"
             echo "LA PARTIDA HA DURADO $elapsed_time SEGUNDOS"
@@ -729,7 +735,7 @@ estrategia2(){
 }
 
 jugar(){
-    start_time=$(date +%s.%N)
+    start_time=$(date -u "start_time" +%s)
     repartirCartas
     turno
     
@@ -792,17 +798,7 @@ sumarPuntos(){
 cargarDatosPartidaEnFicherolog(){
 
     # Fecha|Hora|Jugadores|TiempoTotal|Ganador|Puntos
-    #Buscar en config.cfg el LOG
-    if [ -f "config.cfg" ]; then
-        # Leer la configuración del archivo config.cfg
-        source "config.cfg"
-        # Verificar si la variable LOG está definida en la configuración
-        if [ -n "$LOG" ]; then
-            log_file="$LOG"
-        else
-            echo "ERROR: La variable LOG no está definida en el archivo config.cfg"
-        fi
-    fi
+    # Comprobar la ruta donde se encuentra
     # Obtener la fecha y hora actual
     fecha_actual=$(date +"%d/%m/%y")
     hora_actual=$(date +"%H:%M")
@@ -829,9 +825,10 @@ cargarDatosPartidaEnFicherolog(){
     done
 
 
-
+    # Obtener el nombre del fichero de log
+    leerFicheroLog
     # Imprimir los datos en el archivo de registro en el formato deseado
-    echo -e "$fecha_actual|$hora_actual|$numJugadores|$elapsed_time|$rondas|$jugadorTurno|$puntosGanador|$cartasRestantes" >> "$log_file"
+    echo -e "$fecha_actual|$hora_actual|$numJugadores|$elapsed_time|$rondas|$jugadorTurno|$puntosGanador|$cartasRestantes" >> "$ficheroLog"
     #Imprimir las cartas restantes de los jugadores y si no han jugado pones un * es decir JUGADOR1|JUGADOR2|JUGADOR3|JUGADOR4
     
     read -p "Pulse INTRO para continuar..."
@@ -842,68 +839,56 @@ cargarDatosPartidaEnFicherolog(){
 }
 
 calcular_estadisticas() {
-    # Variables para almacenar las estadísticas
-    # Definir la ruta del archivo de registro
-    log_file="log/prueba.log"
 
-    # Verificar si el archivo de registro existe
-    if [ ! -f "$log_file" ]; then
-        echo "ERROR: El archivo de registro '$log_file' no existe."
-        return
-    elif [ ! -s "$log_file" ]; then
-        echo "ERROR: El archivo de registro '$log_file' está vacío."
-        return
-    else
-        total_partidas=0
-        total_tiempo=0
-        total_puntos=0
-        partidas_ganadas_1=0
-        partidas_ganadas_2=0
-        partidas_ganadas_3=0
-        partidas_ganadas_4=0
+    total_partidas=0
+    total_tiempo=0
+    total_puntos=0
+    partidas_ganadas_1=0
+    partidas_ganadas_2=0
+    partidas_ganadas_3=0
+    partidas_ganadas_4=0
 
-        # Leer el fichero de log línea por línea
-        while IFS='|' read -r fecha hora jugadores tiempo rondas ganador puntos cartas; do
-            # Calcular estadísticas
-            total_partidas=$((total_partidas + 1))
-            total_tiempo=$(bc -l <<< "$total_tiempo + $tiempo")
-            total_puntos=$(bc -l <<< "$total_puntos + $puntos")
+    # Leer el fichero de log línea por línea
+    while IFS='|' read -r fecha hora jugadores tiempo rondas ganador puntos cartas; do
+        # Calcular estadísticas
+        total_partidas=$((total_partidas + 1))
+        total_tiempo=$(bc -l <<< "$total_tiempo + $tiempo")
+        total_puntos=$(bc -l <<< "$total_puntos + $puntos")
 
-            # Verificar el jugador ganador y contar las partidas ganadas por cada jugador
-            case "$ganador" in
-                1)
-                    partidas_ganadas_1=$((partidas_ganadas_1 + 1))
-                    ;;
-                2)
-                    partidas_ganadas_2=$((partidas_ganadas_2 + 1))
-                    ;;
-                3)
-                    partidas_ganadas_3=$((partidas_ganadas_3 + 1))
-                    ;;
-                4)
-                    partidas_ganadas_4=$((partidas_ganadas_4 + 1))
-                    ;;
-            esac
-        done < "$1" # $1 es el nombre del fichero de log pasado como argumento
+        # Verificar el jugador ganador y contar las partidas ganadas por cada jugador
+        case "$ganador" in
+            1)
+                partidas_ganadas_1=$((partidas_ganadas_1 + 1))
+                ;;
+            2)
+                partidas_ganadas_2=$((partidas_ganadas_2 + 1))
+                ;;
+            3)
+                partidas_ganadas_3=$((partidas_ganadas_3 + 1))
+                ;;
+            4)
+                partidas_ganadas_4=$((partidas_ganadas_4 + 1))
+                ;;
+        esac
+    done < "$1" # $1 es el nombre del fichero de log pasado como argumento
 
-        # Calcular medias y porcentajes
-        media_tiempo=$(bc -l <<< "$total_tiempo / $total_partidas")
-        media_puntos=$(bc -l <<< "$total_puntos / $total_partidas")
-        porcentaje_ganadas_1=$(bc -l <<< "($partidas_ganadas_1 / $total_partidas) * 100")
-        porcentaje_ganadas_2=$(bc -l <<< "($partidas_ganadas_2 / $total_partidas) * 100")
-        porcentaje_ganadas_3=$(bc -l <<< "($partidas_ganadas_3 / $total_partidas) * 100")
-        porcentaje_ganadas_4=$(bc -l <<< "($partidas_ganadas_4 / $total_partidas) * 100")
+    # Calcular medias y porcentajes
+    media_tiempo=$(bc -l <<< "$total_tiempo / $total_partidas")
+    media_puntos=$(bc -l <<< "$total_puntos / $total_partidas")
+    porcentaje_ganadas_1=$(bc -l <<< "($partidas_ganadas_1 / $total_partidas) * 100")
+    porcentaje_ganadas_2=$(bc -l <<< "($partidas_ganadas_2 / $total_partidas) * 100")
+    porcentaje_ganadas_3=$(bc -l <<< "($partidas_ganadas_3 / $total_partidas) * 100")
+    porcentaje_ganadas_4=$(bc -l <<< "($partidas_ganadas_4 / $total_partidas) * 100")
 
-        # Mostrar estadísticas
-        echo "Número total de partidas jugadas: $total_partidas"
-        echo "Media de los tiempos de todas las partidas jugadas: $media_tiempo"
-        echo "Tiempo total invertido en todas las partidas: $total_tiempo"
-        echo "Media de los puntos obtenidos por el ganador en todas las partidas: $media_puntos"
-        echo "Porcentaje de partidas ganadas del jugador 1: $porcentaje_ganadas_1%"
-        echo "Porcentaje de partidas ganadas del jugador 2: $porcentaje_ganadas_2%"
-        echo "Porcentaje de partidas ganadas del jugador 3: $porcentaje_ganadas_3%"
-        echo "Porcentaje de partidas ganadas del jugador 4: $porcentaje_ganadas_4%"
-    fi
+    # Mostrar estadísticas
+    echo "Número total de partidas jugadas: $total_partidas"
+    echo "Media de los tiempos de todas las partidas jugadas: $media_tiempo"
+    echo "Tiempo total invertido en todas las partidas: $total_tiempo"
+    echo "Media de los puntos obtenidos por el ganador en todas las partidas: $media_puntos"
+    echo "Porcentaje de partidas ganadas del jugador 1: $porcentaje_ganadas_1%"
+    echo "Porcentaje de partidas ganadas del jugador 2: $porcentaje_ganadas_2%"
+    echo "Porcentaje de partidas ganadas del jugador 3: $porcentaje_ganadas_3%"
+    echo "Porcentaje de partidas ganadas del jugador 4: $porcentaje_ganadas_4%"
 }
 
 
@@ -1008,6 +993,7 @@ mostrar_partidas_destacadas() {
 # Función para jugar una partida de 5illo
 play_game() {
     numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
+
     # Comprobar si el número de jugadores es válido
     if [[ ! $numJugadores =~ ^[2-4]$ ]]; then
         echo "ERROR: El número de jugadores debe de ser 2, 3 o 4."
@@ -1021,14 +1007,16 @@ play_game() {
 # Función para mostrar estadísticas
 show_statistics() {
     # Implementa la lógica para mostrar estadísticas aquí
-    calcular_estadisticas "log/prueba.log"
+    leerFicheroLog
+    calcular_estadisticas "$ficheroLog"
     read -p "Pulse INTRO para continuar..."
 }
 
 # Función para mostrar clasificación
 show_leaderboard() {
     # Implementa la lógica para mostrar la clasificación aquí
-    mostrar_partidas_destacadas "log/prueba.log"
+    leerFicheroLog
+    mostrar_partidas_destacadas "$ficheroLog"
     read -p "Pulse INTRO para continuar..."
 }
 
