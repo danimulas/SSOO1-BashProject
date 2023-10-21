@@ -133,7 +133,7 @@ changeConfig() {
         read -p "Por favor, introduzca una estrategia válida (0, 1 o 2): " estrategia
     done
 
-    read -p "Introduce la ruta del fichero de log: " rutaFicheroLog
+    read -p "Introduce la ruta del fichero de log (La carpeta actual es [.]): " rutaFicheroLog
     while [[ ! -d "$rutaFicheroLog" ]]; do
         read -p "Por favor, introduzca una ruta válida: " rutaFicheroLog
     done
@@ -237,8 +237,6 @@ eliminarCarta() {
                                                                                                                 }
                                                                                                             }
                                                                                                         }')
-
-
     done
         
     if ((numeroEliminar >= 1 && numeroEliminar <= 10)); then
