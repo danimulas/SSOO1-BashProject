@@ -521,7 +521,6 @@ estrategia0(){
         done
 }
 
-#Consiste en que si tienes alguna carta para jugar que no sea 5, la juegas, si no tienes ninguna carta para jugar, juegas la 5
 estrategia1(){
     
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
@@ -579,7 +578,6 @@ estrategia1(){
     done
 }
 
-#Funcion que calcule el numero de cartas de cada palo que tiene el jugador actual y lo almacene en una variable para cada palo
 calcularNumeroCartas(){
 
     numOros=0
@@ -590,8 +588,6 @@ calcularNumeroCartas(){
     maxDistanciaCopas=0
     maxDistanciaEspadas=0
     maxDistanciaBastos=0
-
-    # Calcula la distancia entre la carta más alta/baja de cada palo del 5
 
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
         carta="${cartasNumeros[$i]}"
@@ -629,7 +625,6 @@ calcularNumeroCartas(){
         fi
     done
 
-    #Comparar el numero de cartas de cada palo y quedarse con el palo que mas cartas tenga
     if [ "$numOros" -gt "$numCopas" ] && [ "$numOros" -gt "$numEspadas" ] && [ "$numOros" -gt "$numBastos" ]; then
         paloMayor="Oros"
     fi
@@ -641,9 +636,7 @@ calcularNumeroCartas(){
     fi
     if [ "$numBastos" -gt "$numOros" ] && [ "$numBastos" -gt "$numCopas" ] && [ "$numBastos" -gt "$numEspadas" ]; then
         paloMayor="Bastos"
-    fi
-    
-    
+    fi    
 }
 
 
@@ -718,7 +711,6 @@ estrategia2(){
                     return
                 fi
             fi
-           
     done
 
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
@@ -745,6 +737,7 @@ estrategia2(){
 }
 
 play(){
+    
     TIEMPO_INICIAL=$SECONDS
     numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
 
@@ -759,15 +752,15 @@ play(){
     turno
     
 }
+
 pasar_turno(){
-# Le pasa el turno al jugador de su derecha
     if ((jugadorTurno == numJugadores)); then
         jugadorTurno=1
     else
         jugadorTurno=$((jugadorTurno+1))
     fi
 }
-# Función para decodificar el número de carta en palo
+
 decodificarCarta() {
     numero="$1"
 
@@ -785,7 +778,6 @@ decodificarCarta() {
 }
 
 maxminmesas(){
-  # Obtener los valores mínimos y máximos de las mesas
     min_mesaOros=$(find_min ${mesaOros[@]}) 
     max_mesaOros=$(find_max ${mesaOros[@]})
 
@@ -799,9 +791,7 @@ maxminmesas(){
     max_mesaBastos=$(find_max ${mesaBastos[@]})
 }
 
-#Funcion que sume el numero de cartas que tienen los jugadores que no han ganado
 sumarPuntos(){
-    #recorrer el array de cartas de los jugadores, por cada carta que tenga el jugador sumar 1 punto
     puntosGanador=0
     for ((i=0; i<numJugadores; i++)); do
         cartasJugador=${cartasJugadores[$i]}
@@ -816,9 +806,6 @@ sumarPuntos(){
 
 cargarDatosPartidaEnFicherolog(){
 
-    # Fecha|Hora|Jugadores|TiempoTotal|Ganador|Puntos
-    # Comprobar la ruta donde se encuentra
-    # Obtener la fecha y hora actual
     fecha_actual=$(date +"%d/%m/%y")
     hora_actual=$(date +"%H:%M")
 
@@ -833,24 +820,16 @@ cargarDatosPartidaEnFicherolog(){
             else
                 cartasRestantes+="${cartasJugadores[$i]}"
             fi
-            # Agregar asteriscos para los jugadores que no han jugado
         else
             cartasRestantes+=" * "
         fi
-        # Agregar un guion "-" entre los jugadores, excepto para el último jugador.
         if [ $i -lt 3 ]; then
             cartasRestantes+="-"
         fi
     done
 
-
-    # Obtener el nombre del fichero de log
     leerFicheroLog
-    # Imprimir los datos en el archivo de registro en el formato deseado
     echo -e "$fecha_actual|$hora_actual|$numJugadores|$elapsed_time|$rondas|$jugadorTurno|$puntosGanador|$cartasRestantes">> "$ficheroLog"
-    #Imprimir las cartas restantes de los jugadores y si no han jugado pones un * es decir JUGADOR1|JUGADOR2|JUGADOR3|JUGADOR4
-
-
 }
 
 calculateStatistics() {
