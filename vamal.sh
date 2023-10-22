@@ -303,6 +303,8 @@ find_max() {
     echo "$max"
 }
 
+
+
 bucle_jugabilidad() {
     #comprobar que existe el fichero de configuración, si existe leer la estrategia del fichero de configuracion y si no existe, avisar al usuario
     if [ -f "config.cfg" ]; then
@@ -358,6 +360,7 @@ bucle_jugabilidad() {
             elapsed_time=$((TIEMPO_FINAL - TIEMPO_INICIAL))
             sumarPuntos
             echo "EL JUGADOR $jugadorTurno HA GANADO LA PARTIDA CON $puntosGanador PUNTOS!!"
+            imprimirPuestos
             echo "LA PARTIDA HA DURADO $elapsed_time SEGUNDOS"
             rondas=$(echo "scale=0; $jugadas / $numJugadores" | bc)
             cargarDatosPartidaEnFicherolog
@@ -372,6 +375,7 @@ bucle_jugabilidad() {
     fi
 
 }
+# Funcion para calcular el numero de cartas que tiene cada jugador
 
 jugarManualInicio() {
 
@@ -780,14 +784,59 @@ maxminmesas() {
 
 sumarPuntos() {
     puntosGanador=0
+    declare -a puntosJugadores
+
     for ((i = 0; i < numJugadores; i++)); do
         cartasJugador=${cartasJugadores[$i]}
         IFS=' ' read -ra cartasArray <<<"$cartasJugador"
+        puntosJugadores[$i]=${#cartasArray[@]}
         for carta in "${cartasArray[@]}"; do
             puntosGanador=$((puntosGanador + 1))
         done
     done
+
+    calcularPuesto
 }
+
+calcularPuesto() {
+    declare -a puestosAsignados
+
+    for ((i = 0; i < numJugadores; i++)); do
+        puestosJugadores[$i]=1
+    done
+
+    for ((i = 0; i < numJugadores; i++)); do
+        for ((j = 0; j < numJugadores; j++)); do
+            if ((puntosJugadores[j] < puntosJugadores[i])); then
+                puestosJugadores[i]=$((puestosJugadores[i] + 1))
+            fi
+        done
+    done
+}
+
+
+# Después de llamar a la función sumarPuntos, puedes acceder a los puestos de los jugadores en el arreglo puestosJugadores.
+imprimirPuestos() {
+    echo "PUESTOS DE LOS JUGADORES:"
+    declare -A puestosOrdenados
+
+    for ((i = 0; i < numJugadores; i++)); do
+        jugador="JUGADOR $((i + 1))"
+        puesto="${puestosJugadores[$i]}"
+        if [ -z "${puestosOrdenados[$puesto]}" ]; then
+            puestosOrdenados[$puesto]="$jugador"
+        else
+            puestosOrdenados[$puesto]+=", $jugador"
+        fi
+    done
+
+    for ((i = 1; i <= numJugadores; i++)); do
+        if [ -n "${puestosOrdenados[$i]}" ]; then
+            echo "TOP $i: ${puestosOrdenados[$i]}"
+        fi
+    done
+}
+
 
 cargarDatosPartidaEnFicherolog() {
 
