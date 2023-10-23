@@ -32,7 +32,6 @@ EOF
     └─────────────────────────────────────────────────────────────────────────────┘
 EOF
 
-    # Celda para Estrategia 2 (más grande)
     cat <<"EOF"
     ┌─────────────────────────────────────────────────────────────────────────────┐
     │                        ESTRATEGIA 2  (NIVEL DIFÍCIL)                        │
@@ -59,7 +58,6 @@ comprobarArgumentos() {
     fi
 }
 
-# Función para mostrar el menú principal
 showMenu() {
     clear
     echo "                                                       
@@ -78,29 +76,19 @@ F)CLASIFICACION
 S)SALIR"
     echo "“5illo”. Introduzca una opción >>"
 }
-#!/bin/bash
-
-# Definir la función
 
 leerFicheroLog() {
-    # Verificar si el archivo config.cfg existe
-    if [ -e "config.cfg" ]; then
-        # Leer la línea que contiene "LOG="
-        linea=$(grep "LOG=" config.cfg)
 
-        # Extraer el valor después del "=" y almacenarlo en rutaFicheroLog
+    if [ -e "config.cfg" ]; then
+        linea=$(grep "LOG=" config.cfg)
         rutaFicheroLog=${linea#*=}
-        #Comprobar si existe el directorio, si no existe, advertir al usuario
         if [ -d "$rutaFicheroLog" ]; then
-            # Crear la ruta completa del archivo de registro
             ficheroLog="$rutaFicheroLog/fichero.log"
         else
             echo "ERROR: El directorio $rutaFicheroLog no existe."
         fi
 
-        # Verificar si el archivo de registro existe, si no existe, advertir al usuario
         if ! [ -f "$ficheroLog" ]; then
-
             echo "ERROR: El archivo de registro $ficheroLog no existe."
         fi
 
@@ -109,11 +97,10 @@ leerFicheroLog() {
     fi
 }
 
-# Función para cambiar la configuración
 changeConfig() {
     echo "Configuración actual:"
     cat config.cfg
-    log_directory="log" # Directorio fijo llamado "log"
+    log_directory="log"
 
     read -p "Nuevo número de jugadores (2-4): " jugadores
     while [[ ! $jugadores =~ ^[2-4]$ ]]; do
@@ -139,12 +126,11 @@ changeConfig() {
     read -p "Pulse INTRO para continuar..."
 }
 
-# Función para barajar las cartas
+
 barajarCartas() {
-    # Inicializar un array para las cartas
+
     cartas=()
 
-    # Generar todas las cartas con números del 1 al 40
     numero=1
     while [ $numero -le 40 ]; do
         cartas+=("$numero")
@@ -191,6 +177,7 @@ repartirCartas() {
 }
 
 imprimirCartasIntro() {
+
     read -p "Pulse INTRO para continuar..."
     for ((i = 0; i < numJugadores; i++)); do
         echo "Cartas del Jugador $((i + 1)): ${cartasJugadores[$i]}"
@@ -202,7 +189,9 @@ imprimirCartasIntro() {
     echo "Mesa Bastos: ${mesaBastos[*]}"
     echo "--------------------------------------------------"
 }
+
 imprimirCartas() {
+
     for ((i = 0; i < numJugadores; i++)); do
         echo "Cartas del Jugador $((i + 1)): ${cartasJugadores[$i]}"
     done
@@ -263,7 +252,6 @@ turno() {
 
     cartasJugadorActual=${cartasJugadores[$((jugadorTurno - 1))]}
 
-    # Convertir las cartas en un array
     IFS=' ' read -ra cartasNumeros <<<"$cartasJugadorActual"
 
     echo "El jugador $jugadorTurno empieza la partida"
@@ -276,14 +264,12 @@ turno() {
     $jugadas = 0
     while $jugar; do
         bucle_jugabilidad
-        #HACER FUNCION PARA CALCULAR LOS PUESTOS DE LOS JUGADORES
         read -p "Pulse INTRO para continuar..."
         showMenu
     done
 
 }
 
-# Función para encontrar el valor mínimo en un array
 find_min() {
     local min="$1"
     shift
@@ -293,8 +279,9 @@ find_min() {
     echo "$min"
 }
 
-# Función para encontrar el valor máximo en un conjunto de números
+
 find_max() {
+
     local max="$1"
     shift
     for num in "$@"; do
@@ -306,11 +293,9 @@ find_max() {
 
 
 bucle_jugabilidad() {
-    #comprobar que existe el fichero de configuración, si existe leer la estrategia del fichero de configuracion y si no existe, avisar al usuario
+
     if [ -f "config.cfg" ]; then
-        # Leer la configuración del archivo config.cfg
         source "config.cfg"
-        # Verificar si la variable ESTRATEGIA está definida en la configuración
         if [ -n "$ESTRATEGIA" ]; then
             estrategia="$ESTRATEGIA"
         else
@@ -323,7 +308,6 @@ bucle_jugabilidad() {
 
     clear
     echo "Turno del jugador $jugadorTurno"
-    # Obtener las cartas del jugador actual
     cartasJugadorActual=${cartasJugadores[$((jugadorTurno - 1))]}
 
     IFS=' ' read -ra cartasNumeros <<<"$cartasJugadorActual"
@@ -335,7 +319,6 @@ bucle_jugabilidad() {
     if [ "$jugadorTurno" -eq "1" ]; then
         jugar_manual
     else
-        # Escoger la estrategia dependiendo del valor de la variable estrategia
         case "$estrategia" in
         0)
             estrategia0
@@ -375,7 +358,6 @@ bucle_jugabilidad() {
     fi
 
 }
-# Funcion para calcular el numero de cartas que tiene cada jugador
 
 jugarManualInicio() {
 
@@ -462,6 +444,7 @@ jugar_manual() {
 }
 
 estrategia0() {
+
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
         carta="${cartasNumeros[$i]}"
 
@@ -732,7 +715,6 @@ play() {
     TIEMPO_INICIAL=$SECONDS
     numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
 
-    # Comprobar si el número de jugadores es válido
     if [[ ! $numJugadores =~ ^[2-4]$ ]]; then
         echo "ERROR: El número de jugadores debe de ser 2, 3 o 4."
         read -p "Pulse INTRO para continuar..."
@@ -814,8 +796,6 @@ calcularPuesto() {
     done
 }
 
-
-# Después de llamar a la función sumarPuntos, puedes acceder a los puestos de los jugadores en el arreglo puestosJugadores.
 imprimirPuestos() {
     echo "PUESTOS DE LOS JUGADORES:"
     declare -A puestosOrdenados
@@ -836,7 +816,6 @@ imprimirPuestos() {
         fi
     done
 }
-
 
 cargarDatosPartidaEnFicherolog() {
 
