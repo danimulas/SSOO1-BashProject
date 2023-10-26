@@ -119,6 +119,7 @@ changeConfig() {
         read -p "Por favor, introduzca una ruta válida: " ficheroLog
     done
 
+    # AÑADIR COMPROBACIÓN DE QUE EL FICHERO LOG NO ESTÁ SIENDO USADO POR OTRO PROCESO
     # Actualizar configuración si todas las entradas son válidas.
     echo "JUGADORES=$jugadores" >config.cfg
     echo "ESTRATEGIA=$estrategia" >>config.cfg
@@ -127,7 +128,6 @@ changeConfig() {
     echo -e "\nCONFIGURACIÓN ACTUALIZADA CORRECTAMENTE"
     read -p "Pulse INTRO para continuar..."
 }
-
 
 barajarCartas() {
 
