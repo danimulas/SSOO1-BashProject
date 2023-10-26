@@ -181,29 +181,125 @@ repartirCartas() {
 imprimirCartasIntro() {
 
     read -p "Pulse INTRO para continuar..."
-    for ((i = 0; i < numJugadores; i++)); do
-        echo "Cartas del Jugador $((i + 1)): ${cartasJugadores[$i]}"
+     for ((i = 0; i < numJugadores; i++)); do
+        jugador_cartas="${cartasJugadores[$i]}"
+        cartas_convertidas=""
+        
+        for carta in $jugador_cartas; do
+            if ((carta >= 1 && carta <= 10)); then
+                # Si la carta está en el rango de 1-10, añadir una 0
+                cartas_convertidas="${cartas_convertidas}${carta}-O "
+            elif ((carta >= 11 && carta <= 20)); then
+                # Si la carta está en el rango de 11-20, restar 10 y añadir una C
+                carta=$((carta - 10))
+                cartas_convertidas="${cartas_convertidas}${carta}-C "
+            elif ((carta >= 21 && carta <= 30)); then
+                # Si la carta está en el rango de 21-30, restar 20 y añadir una E
+                carta=$((carta - 20))
+                cartas_convertidas="${cartas_convertidas}${carta}-E "
+            else
+                # En caso contrario, mantener la carta como está y añadir una B
+                carta=$((carta - 30))
+                cartas_convertidas="${cartas_convertidas}${carta}-B "
+            fi
+        done
+        
+        echo "Cartas del Jugador $((i + 1)): ${cartas_convertidas}"
     done
+
     echo "--------------------------------------------------"
-    echo "Mesa Oros: ${mesaOros[*]}"
-    echo "Mesa Copas: ${mesaCopas[*]}"
-    echo "Mesa Espadas: ${mesaEspadas[*]}"
-    echo "Mesa Bastos: ${mesaBastos[*]}"
+    ## Imprimir el contenido de la mesa de oros en una sola línea
+    echo -n "Cartas de Oros: "
+    for ((i = 0; i < ${#mesaOros[@]}; i++)); do
+    #en la ultima interaccion no añade el guion
+        echo -n "${mesaOros[$i]} "
+    done
+    echo
+
+    ## Imprimir el contenido de la mesa de copas en una sola línea restando 10 a cada valor
+    echo -n "Cartas de Copas: "
+    for ((i = 0; i < ${#mesaCopas[@]}; i++)); do
+            echo -n "$((mesaCopas[$i] - 10)) "
+    done
+    echo
+
+    ## Imprimir el contenido de la mesa de espadas en una sola línea restando 20 a cada valor
+    echo -n "Cartas de Espadas: "
+    for ((i = 0; i < ${#mesaEspadas[@]}; i++)); do
+            echo -n "$((mesaEspadas[$i] - 20)) "
+    done
+    echo
+
+    ## Imprimir el contenido de la mesa de bastos en una sola línea restando 3 a cada valor
+    echo -n "Cartas de Bastos: "
+    for ((i = 0; i < ${#mesaBastos[@]}; i++)); do
+            echo -n "$((mesaBastos[$i] - 30)) "
+    done
+    echo""
     echo "--------------------------------------------------"
 }
-
 imprimirCartas() {
 
     for ((i = 0; i < numJugadores; i++)); do
-        echo "Cartas del Jugador $((i + 1)): ${cartasJugadores[$i]}"
+        jugador_cartas="${cartasJugadores[$i]}"
+        cartas_convertidas=""
+        
+        for carta in $jugador_cartas; do
+            if ((carta >= 1 && carta <= 10)); then
+                # Si la carta está en el rango de 1-10, añadir una 0
+                cartas_convertidas="${cartas_convertidas}${carta}-O "
+            elif ((carta >= 11 && carta <= 20)); then
+                # Si la carta está en el rango de 11-20, restar 10 y añadir una C
+                carta=$((carta - 10))
+                cartas_convertidas="${cartas_convertidas}${carta}-C "
+            elif ((carta >= 21 && carta <= 30)); then
+                # Si la carta está en el rango de 21-30, restar 20 y añadir una E
+                carta=$((carta - 20))
+                cartas_convertidas="${cartas_convertidas}${carta}-E "
+            else
+                # En caso contrario, mantener la carta como está y añadir una B
+                carta=$((carta - 30))
+                cartas_convertidas="${cartas_convertidas}${carta}-B "
+            fi
+        done
+        
+        echo "Cartas del Jugador $((i + 1)): ${cartas_convertidas}"
     done
+
     echo "--------------------------------------------------"
-    echo "Mesa Oros: ${mesaOros[*]}"
-    echo "Mesa Copas: ${mesaCopas[*]}"
-    echo "Mesa Espadas: ${mesaEspadas[*]}"
-    echo "Mesa Bastos: ${mesaBastos[*]}"
+
+    ## Imprimir el contenido de la mesa de oros en una sola línea
+    echo -n "Cartas de Oros: "
+    for ((i = 0; i < ${#mesaOros[@]}; i++)); do
+    #en la ultima interaccion no añade el guion
+        echo -n "${mesaOros[$i]} "
+    done
+    echo
+
+    ## Imprimir el contenido de la mesa de copas en una sola línea restando 10 a cada valor
+    echo -n "Cartas de Copas: "
+    for ((i = 0; i < ${#mesaCopas[@]}; i++)); do
+            echo -n "$((mesaCopas[$i] - 10)) "
+    done
+    echo
+
+    ## Imprimir el contenido de la mesa de espadas en una sola línea restando 20 a cada valor
+    echo -n "Cartas de Espadas: "
+    for ((i = 0; i < ${#mesaEspadas[@]}; i++)); do
+            echo -n "$((mesaEspadas[$i] - 20)) "
+    done
+    echo
+
+    ## Imprimir el contenido de la mesa de bastos en una sola línea restando 3 a cada valor
+    echo -n "Cartas de Bastos: "
+    for ((i = 0; i < ${#mesaBastos[@]}; i++)); do
+            echo -n "$((mesaBastos[$i] - 30)) "
+    done
+    echo""
     echo "--------------------------------------------------"
 }
+
+
 
 eliminarCarta() {
     for ((i = 0; i < ${#cartasJugadores[@]}; i++)); do
@@ -365,28 +461,23 @@ jugarManualInicio() {
 
     imprimirCartas
     while true; do
-        read -p "Elige una carta de tu mano: " posicion
-        carta_valida=false
-
-        for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
-            carta="${cartasNumeros[$i]}"
-            if [ "$carta" -eq "$posicion" ]; then
-                if ([ "$carta" -eq 5 ]); then
-                    numeroEliminar="$carta"
-                    carta_valida=true
-                    break
-                fi
-            fi
-        done
-
-        if [ "$carta_valida" = true ]; then
-            clear
-            break # Carta válida, salimos del bucle while
+        read -p "Elige el palo (O para Oros): " palo
+        if [ "$palo" = "O" ] || [ "$palo" = "o" ]; then
+            break
         else
-            echo "La carta seleccionada no es válida. Por favor, elige una carta válida."
+            echo "Palo no válido. Por favor, elige 'O' para Oros."
         fi
     done
 
+    while true; do
+        read -p "Elige una carta de tu mano: " posicion
+        if [ "$posicion" -eq 5 ]; then
+            clear
+            break
+        else
+            echo "La carta seleccionada no es válida. Por favor, elige la carta '5'."
+        fi
+    done
 }
 
 jugar_manual() {
@@ -394,38 +485,106 @@ jugar_manual() {
     imprimirCartas
 
     posibilidad=false
+    posibilidadOros=0
+    posibilidadCopas=0
+    posibilidadEspadas=0
+    posibilidadBastos=0
 
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
         carta="${cartasNumeros[$i]}"
         if (
             [ "$carta" -eq "$((min_mesaOros - 1))" ] || [ "$carta" -eq "$((max_mesaOros + 1))" ] ||
-                ([ "$carta" -ge 11 ] && [ "$carta" -eq "$((min_mesaCopas - 1))" ] && [ "$carta" -ne 1 ]) ||
-                ([ "$carta" -le 20 ] && [ "$carta" -eq "$((max_mesaCopas + 1))" ] && [ "$carta" -ne 1 ]) ||
-                ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ] && [ "$carta" -ne 1 ]) ||
-                ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ] && [ "$carta" -ne 1 ]) ||
-                ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ] && [ "$carta" -ne 1 ]) ||
-                ([ "$carta" -eq "$((max_mesaBastos + 1))" ] && [ "$carta" -ne 1 ]) || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
+            ([ "$carta" -ge 11 ] && [ "$carta" -eq "$((min_mesaCopas - 1))" ] && [ "$carta" -ne 1 ]) ||
+            ([ "$carta" -le 20 ] && [ "$carta" -eq "$((max_mesaCopas + 1))" ] && [ "$carta" -ge 11 ]) ||
+            ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ]) ||
+            ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ] && [ "$carta" -ge 21 ]) ||
+            ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ]) ||
+            ([ "$carta" -eq "$((max_mesaBastos + 1))" ] && [ "$carta" -ge 31 ]) || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
         ); then
             posibilidad=true
-            break
+
+            # Actualizar las variables de palo
+            case "$carta" in
+                [1-9]|10) posibilidadOros=1 ;;
+                1[1-9]|20) posibilidadCopas=1 ;;
+                2[1-9]|30) posibilidadEspadas=1 ;;
+                3[1-9]|40) posibilidadBastos=1 ;;
+            esac
+
         fi
     done
+
+    #Imprimir las posibilidades
+
     if $posibilidad; then
         while true; do
-            read -p "Elige una carta de tu mano: " posicion
-            carta_valida=false
+            palo_valido=false
+
+            while [ "$palo_valido" = false ]; do
+                read -p "Elige un palo (O para oros, C para copas, E para espadas, B para bastos): " palo
+
+                case "$palo" in
+                    "O" | "o")
+                        if [ "$posibilidadOros" -eq 1 ]; then
+                            palo_valido=true
+                        else
+                            echo "No puedes jugar cartas de oros. Elige otro palo."
+                        fi
+                        ;;
+                    "C" | "c")
+                        if [ "$posibilidadCopas" -eq 1 ]; then
+                            palo_valido=true
+                        else
+                            echo "No puedes jugar cartas de copas. Elige otro palo."
+                        fi
+                        ;;
+                    "E" | "e")
+                        if [ "$posibilidadEspadas" -eq 1 ]; then
+                            palo_valido=true
+                        else
+                            echo "No puedes jugar cartas de espadas. Elige otro palo."
+                        fi
+                        ;;
+                    "B" | "b")
+                        if [ "$posibilidadBastos" -eq 1 ]; then
+                            palo_valido=true
+                        else
+                            echo "No puedes jugar cartas de bastos. Elige otro palo."
+                        fi
+                        ;;
+                    *)
+                        echo "Palo no válido. Elige un palo válido (O, C, E o B)."
+                        ;;
+                esac
+            done
+
+            read -p "Elige un número de carta: " numero
+
+            case "$palo" in
+                "O" | "o")
+                    ;;
+                "C" | "c")
+                    numero=$((numero + 10))
+                    ;;
+                "E" | "e")
+                    numero=$((numero + 20))
+                    ;;
+                "B" | "b")
+                    numero=$((numero + 30))
+                    ;;
+            esac
 
             for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
                 carta="${cartasNumeros[$i]}"
-                if [ "$carta" -eq "$posicion" ]; then
+                if [ "$carta" -eq "$numero" ]; then
                     if (
                         [ "$carta" -eq "$((min_mesaOros - 1))" ] || [ "$carta" -eq "$((max_mesaOros + 1))" ] ||
-                            ([ "$carta" -ge 11 ] && [ "$carta" -eq "$((min_mesaCopas - 1))" ] && [ "$carta" -ne 1 ]) ||
-                            ([ "$carta" -le 20 ] && [ "$carta" -eq "$((max_mesaCopas + 1))" ] && [ "$carta" -ge 11 ]) ||
-                            ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ]) ||
-                            ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ] && [ "$carta" -ge 21 ]) ||
-                            ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ]) ||
-                            ([ "$carta" -eq "$((max_mesaBastos + 1))" ] && [ "$carta" -ge 31 ]) || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
+                        ([ "$carta" -ge 11 ] && [ "$carta" -eq "$((min_mesaCopas - 1))" ] && [ "$carta" -ne 1 ]) ||
+                        ([ "$carta" -le 20 ] && [ "$carta" -eq "$((max_mesaCopas + 1))" ] && [ "$carta" -ge 11 ]) ||
+                        ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ]) ||
+                        ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ] && [ "$carta" -ge 21 ]) ||
+                        ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ]) ||
+                        ([ "$carta" -eq "$((max_mesaBastos + 1))" ] && [ "$carta" -ge 31 ]) || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
                     ); then
                         numeroEliminar="$carta"
                         carta_valida=true
@@ -438,12 +597,13 @@ jugar_manual() {
                 clear
                 break # Carta válida, salimos del bucle while
             else
-                echo "La carta seleccionada no es válida. Por favor, elige una carta válida."
+                echo "ERROR. La carta seleccionada no es válida. Por favor, elige una carta válida."
             fi
         done
-
     fi
 }
+
+
 
 estrategia0() {
 
