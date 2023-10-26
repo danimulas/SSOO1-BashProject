@@ -78,20 +78,12 @@ S)SALIR"
 }
 
 leerFicheroLog() {
-
-    if [ -e "config.cfg" ]; then
+    if test -e "config.cfg"; then
         linea=$(grep "LOG=" config.cfg)
-        rutaFicheroLog=${linea#*=}
-        if [ -d "$rutaFicheroLog" ]; then
-            ficheroLog="$rutaFicheroLog/fichero.log"
-        else
-            echo "ERROR: El directorio $rutaFicheroLog no existe."
-        fi
-
-        if ! [ -f "$ficheroLog" ]; then
+        ficheroLog=${linea#*=}
+        if ! test -f "$ficheroLog"; then
             echo "ERROR: El archivo de registro $ficheroLog no existe."
         fi
-
     else
         echo "El archivo config.cfg no existe."
     fi
@@ -100,27 +92,37 @@ leerFicheroLog() {
 changeConfig() {
     echo "Configuración actual:"
     cat config.cfg
-    log_directory="log"
 
+    # Verificar si el archivo config.cfg existe y se puede abrir.
+    if ! test -e "config.cfg" || ! test -r "config.cfg"; then
+        echo "ERROR: No se puede abrir el archivo 'config.cfg' o no existe."
+        return
+    fi
+
+    # Solicitar el nuevo número de jugadores y verificar la entrada.
     read -p "Nuevo número de jugadores (2-4): " jugadores
-    while [[ ! $jugadores =~ ^[2-4]$ ]]; do
-        read -p "Por favor, introduzca un número válido de jugadores (2-4): " jugadores
+    while ! [[ "$jugadores" =~ ^[2-4]$ ]]; do
+        echo "ERROR: Por favor, introduzca un número válido de jugadores (2-4)."
+        read -p "Nuevo número de jugadores (2-4): " jugadores
     done
 
+    # Solicitar la nueva estrategia y verificar la entrada.
     read -p "Nueva estrategia (0, 1 o 2): " estrategia
-    while [[ ! $estrategia =~ ^[0-2]$ ]]; do
-        read -p "Por favor, introduzca una estrategia válida (0, 1 o 2): " estrategia
+    while ! [[ "$estrategia" =~ ^[0-2]$ ]]; do
+        echo "ERROR: Por favor, introduzca una estrategia válida (0, 1 o 2)."
+        read -p "Nueva estrategia (0, 1 o 2): " estrategia
+    done
+    # Solicitar la ubicación del fichero log y verificar si es un directorio existente.
+    read -p "Introduzca la ubicación del fichero log (por ejemplo, ./fichero.log): " ficheroLog
+    while ! test -f "$ficheroLog" || ! test -d "$(dirname $ficheroLog)"; do
+        echo "ERROR: La ruta proporcionada no es válida."
+        read -p "Por favor, introduzca una ruta válida: " ficheroLog
     done
 
-    read -p "Introduce la ruta del fichero de log (La carpeta actual es [.]): " rutaFicheroLog
-    while [[ ! -d "$rutaFicheroLog" ]]; do
-        read -p "Por favor, introduzca una ruta válida: " rutaFicheroLog
-    done
-
-    # Actualizar configuración
+    # Actualizar configuración si todas las entradas son válidas.
     echo "JUGADORES=$jugadores" >config.cfg
     echo "ESTRATEGIA=$estrategia" >>config.cfg
-    echo "LOG=$rutaFicheroLog" >>config.cfg
+    echo "LOG=$ficheroLog" >>config.cfg
 
     echo -e "\nCONFIGURACIÓN ACTUALIZADA CORRECTAMENTE"
     read -p "Pulse INTRO para continuar..."
@@ -178,7 +180,6 @@ repartirCartas() {
 
 imprimirCartasIntro() {
 
-
     read -p "Pulse INTRO para continuar..."
     for ((i = 0; i < numJugadores; i++)); do
         echo "Cartas del Jugador $((i + 1)): ${cartasJugadores[$i]}"
@@ -196,72 +197,13 @@ imprimirCartas() {
     for ((i = 0; i < numJugadores; i++)); do
         echo "Cartas del Jugador $((i + 1)): ${cartasJugadores[$i]}"
     done
-
-    decodificarCartasMesa
-
     echo "--------------------------------------------------"
-    echo "Mesa Oros: ${mostrarMesaOros[*]}"
-    echo "Mesa Copas: ${mostrarMesaCopas[*]}"
-    echo "Mesa Espadas: ${mostrarMesaEspadas[*]}"
-    echo "Mesa Bastos: ${mostarMesaBastos[*]}"
+    echo "Mesa Oros: ${mesaOros[*]}"
+    echo "Mesa Copas: ${mesaCopas[*]}"
+    echo "Mesa Espadas: ${mesaEspadas[*]}"
+    echo "Mesa Bastos: ${mesaBastos[*]}"
     echo "--------------------------------------------------"
 }
-
-decodificarCartasMesa() {
-    mostrarMesaOros=()
-    mostrarMesaCopas=()
-    mostrarMesaEspadas=()
-    mostrarMesaBastos=()
-
-    for carta in "${mesaOros[@]}"; do
-        case $carta in
-            1) mostrarMesaOros+=("1 o");;
-            2) mostrarMesaOros+=("2 o");;
-            3) mostrarMesaOros+=("3 o");;
-            7) mostrarMesaOros+=("Sota O");;
-            8) mostrarMesaOros+=("Caballo O");;
-            9) mostrarMesaOros+=("Rey O");;
-            *) mostrarMesaOros+=("$carta");;
-        esac
-    done
-
-    for carta in "${mesaCopas[@]}"; do
-        case $carta in
-            11) mostrarMesaCopas+=("1o");;
-            12) mostrarMesaCopas+=("2o");;
-            13) mostrarMesaCopas+=("3o");;
-            7) mostrarMesaCopas+=("SotaO");;
-            8) mostrarMesaCopas+=("CaballoO");;
-            9) mostrarMesaCopas+=("ReyO");;
-            *) mostrarMesaCopas+=("$carta");;
-        esac
-    done
-
-    for carta in "${mesaEspadas[@]}"; do
-        case $carta in
-            1) mostrarMesaEspadas+=("1o");;
-            2) mostrarMesaEspadas+=("2o");;
-            3) mostrarMesaEspadas+=("3o");;
-            7) mostrarMesaEspadas+=("SotaO");;
-            8) mostrarMesaEspadas+=("CaballoO");;
-            9) mostrarMesaEspadas+=("ReyO");;
-            *) mostrarMesaEspadas+=("$carta");;
-        esac
-    done
-
-    for carta in "${mesaBastos[@]}"; do
-        case $carta in
-            1) mostrarMesaBastos+=("1o");;
-            2) mostrarMesaBastos+=("2o");;
-            3) mostrarMesaBastos+=("3o");;
-            7) mostrarMesaBastos+=("SotaO");;
-            8) mostrarMesaBastos+=("CaballoO");;
-            9) mostrarMesaBastos+=("ReyO");;
-            *) mostrarMesaBastos+=("$carta");;
-        esac
-    done
-}
-
 
 eliminarCarta() {
     for ((i = 0; i < ${#cartasJugadores[@]}; i++)); do
@@ -349,6 +291,8 @@ find_max() {
     done
     echo "$max"
 }
+
+
 
 bucle_jugabilidad() {
 
