@@ -178,6 +178,7 @@ repartirCartas() {
 
 imprimirCartasIntro() {
 
+
     read -p "Pulse INTRO para continuar..."
     for ((i = 0; i < numJugadores; i++)); do
         echo "Cartas del Jugador $((i + 1)): ${cartasJugadores[$i]}"
@@ -195,13 +196,72 @@ imprimirCartas() {
     for ((i = 0; i < numJugadores; i++)); do
         echo "Cartas del Jugador $((i + 1)): ${cartasJugadores[$i]}"
     done
+
+    decodificarCartasMesa
+
     echo "--------------------------------------------------"
-    echo "Mesa Oros: ${mesaOros[*]}"
-    echo "Mesa Copas: ${mesaCopas[*]}"
-    echo "Mesa Espadas: ${mesaEspadas[*]}"
-    echo "Mesa Bastos: ${mesaBastos[*]}"
+    echo "Mesa Oros: ${mostrarMesaOros[*]}"
+    echo "Mesa Copas: ${mostrarMesaCopas[*]}"
+    echo "Mesa Espadas: ${mostrarMesaEspadas[*]}"
+    echo "Mesa Bastos: ${mostarMesaBastos[*]}"
     echo "--------------------------------------------------"
 }
+
+decodificarCartasMesa() {
+    mostrarMesaOros=()
+    mostrarMesaCopas=()
+    mostrarMesaEspadas=()
+    mostrarMesaBastos=()
+
+    for carta in "${mesaOros[@]}"; do
+        case $carta in
+            1) mostrarMesaOros+=("1 o");;
+            2) mostrarMesaOros+=("2 o");;
+            3) mostrarMesaOros+=("3 o");;
+            7) mostrarMesaOros+=("Sota O");;
+            8) mostrarMesaOros+=("Caballo O");;
+            9) mostrarMesaOros+=("Rey O");;
+            *) mostrarMesaOros+=("$carta");;
+        esac
+    done
+
+    for carta in "${mesaCopas[@]}"; do
+        case $carta in
+            11) mostrarMesaCopas+=("1o");;
+            12) mostrarMesaCopas+=("2o");;
+            13) mostrarMesaCopas+=("3o");;
+            7) mostrarMesaCopas+=("SotaO");;
+            8) mostrarMesaCopas+=("CaballoO");;
+            9) mostrarMesaCopas+=("ReyO");;
+            *) mostrarMesaCopas+=("$carta");;
+        esac
+    done
+
+    for carta in "${mesaEspadas[@]}"; do
+        case $carta in
+            1) mostrarMesaEspadas+=("1o");;
+            2) mostrarMesaEspadas+=("2o");;
+            3) mostrarMesaEspadas+=("3o");;
+            7) mostrarMesaEspadas+=("SotaO");;
+            8) mostrarMesaEspadas+=("CaballoO");;
+            9) mostrarMesaEspadas+=("ReyO");;
+            *) mostrarMesaEspadas+=("$carta");;
+        esac
+    done
+
+    for carta in "${mesaBastos[@]}"; do
+        case $carta in
+            1) mostrarMesaBastos+=("1o");;
+            2) mostrarMesaBastos+=("2o");;
+            3) mostrarMesaBastos+=("3o");;
+            7) mostrarMesaBastos+=("SotaO");;
+            8) mostrarMesaBastos+=("CaballoO");;
+            9) mostrarMesaBastos+=("ReyO");;
+            *) mostrarMesaBastos+=("$carta");;
+        esac
+    done
+}
+
 
 eliminarCarta() {
     for ((i = 0; i < ${#cartasJugadores[@]}; i++)); do
@@ -289,8 +349,6 @@ find_max() {
     done
     echo "$max"
 }
-
-
 
 bucle_jugabilidad() {
 
