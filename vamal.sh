@@ -114,17 +114,46 @@ changeConfig() {
     done
     # Solicitar la ubicación del fichero log y verificar si es un directorio existente.
     read -p "Introduzca la ubicación del fichero log (por ejemplo, ./fichero.log): " ficheroLog
-    while ! test -f "$ficheroLog" || ! test -d "$(dirname $ficheroLog)"; do
-        echo "ERROR: La ruta proporcionada no es válida."
+    while ! test -f "$ficheroLog" || ! test -s "$ficheroLog"; do 
+        echo "ERROR: La ruta proporcionada no es válida o el archivo está vacío."
         read -p "Por favor, introduzca una ruta válida: " ficheroLog
     done
 
-    # AÑADIR COMPROBACIÓN DE QUE EL FICHERO LOG NO ESTÁ SIENDO USADO POR OTRO PROCESO
-    # Actualizar configuración si todas las entradas son válidas.
-    echo "JUGADORES=$jugadores" >config.cfg
-    echo "ESTRATEGIA=$estrategia" >>config.cfg
-    echo "LOG=$ficheroLog" >>config.cfg
 
+    # AÑADIR COMPROBACIÓN DE QUE EL FICHERO LOG NO ESTÁ SIENDO USADO POR OTRO PROCESO
+
+    # Actualizar configuración si todas las entradas son válidas.
+    if test -e "config.cfg"; then
+    # Verificar si el archivo es escribible
+        if test -w "config.cfg"; then
+            # Comando para escribir las configuraciones en el archivo
+            echo "JUGADORES=$jugadores" > "config.cfg"
+            if test $? -ne 0; then
+                echo "Error al escribir la configuración JUGADORES en config.cfg"
+                exit 1
+            fi
+
+            echo "ESTRATEGIA=$estrategia" >> "config.cfg"
+            if test $? -ne 0; then
+                echo "Error al escribir la configuración ESTRATEGIA en config.cfg"
+                exit 1
+            fi
+
+            echo "LOG=$ficheroLog" >> "config.cfg"
+            if test $? -ne 0; then
+                echo "Error al escribir la configuración LOG en config.cfg"
+                exit 1
+            fi
+
+            echo "Configuración escrita con éxito en config.cfg"
+        else
+            echo "Error: El archivo config.cfg no es escribible."
+            exit 1
+        fi
+    else
+        echo "Error: El archivo config.cfg no existe."
+        exit 1
+    fi
     echo -e "\nCONFIGURACIÓN ACTUALIZADA CORRECTAMENTE"
     read -p "Pulse INTRO para continuar..."
 }
