@@ -78,15 +78,25 @@ S)SALIR"
 }
 
 leerFicheroLog() {
-    if test -e "config.cfg"; then
-        linea=$(grep "LOG=" config.cfg)
-        ficheroLog=${linea#*=}
-        if ! test -f "$ficheroLog"; then
-            echo "ERROR: El archivo de registro $ficheroLog no existe."
+    if test -e "config.cfg"; then #comprobamos que existe
+        if test -r "config.cfg"; then #comprobamos que se puede leer
+            if test $(grep -c "LOG=" config.cfg) -gt 0; then #comprobamos que la linea "LOG=" existe
+                linea=$(grep "LOG=" config.cfg)
+                ficheroLog=${linea#*=}
+                
+                if ! test -f "$ficheroLog"; then #comprobamos que el fichero de log existe
+                    echo "ERROR: El fichero de log ubicado en $ficheroLog no existe."
+                fi
+            else
+            echo "ERROR: No se encontró la línea 'LOG=' en el archivo config.cfg."
+            fi
+        else
+            echo "ERROR: No se puede leer el archivo config.cfg."
         fi
     else
-        echo "El archivo config.cfg no existe."
+        echo "ERROR: El archivo config.cfg no existe."
     fi
+
 }
 
 changeConfig() {
@@ -94,8 +104,13 @@ changeConfig() {
     cat config.cfg
 
     # Verificar si el archivo config.cfg existe y se puede abrir.
-    if ! test -e "config.cfg" || ! test -r "config.cfg"; then
-        echo "ERROR: No se puede abrir el archivo 'config.cfg' o no existe."
+    if ! test -e "config.cfg"; then
+        echo "ERROR: El archivo 'config.cfg' no existe."
+        return
+    fi
+
+    if ! test -r "config.cfg"; then
+        echo "ERROR: No se puede abrir el archivo 'config.cfg'."
         return
     fi
 
