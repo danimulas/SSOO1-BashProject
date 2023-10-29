@@ -46,17 +46,24 @@ EOF
     └─────────────────────────────────────────────────────────────────────────────┘
 EOF
 
-    read -p "Pulse INTRO para continuar..."
+    read -p "Pulse INTRO para salir..."
 }
 
 comprobarArgumentos() {
-    if [[ "$2" ]] || [[ "$1" ]] && [[ "$1" != "-g" ]]; then
-        echo -e "ERROR: Para ejecutar el programa escribe 'domino.sh [-g]'."
+
+    if test "$1" && test "$1" != "-g"; then
+        echo -e "ERROR: Parámetro inválido. Para ejecutar el programa, escribe 'domino.sh [-g]'."
         exit
-    elif [[ "$1" = "-g" ]]; then
-        mostrarProgramadoresEstrategias
     fi
+
+    if test "$1" = "-g"; then
+        mostrarProgramadoresEstrategias
+        exit
+    fi
+
+
 }
+
 
 showMenu() {
     clear
@@ -222,34 +229,38 @@ repartirCartas() {
     fi
 }
 
+decodificarCarta2(){
+    
+}
+
 imprimirCartasIntro() {
 
     read -p "Pulse INTRO para continuar..."
-     for ((i = 0; i < numJugadores; i++)); do
-        jugador_cartas="${cartasJugadores[$i]}"
-        cartas_convertidas=""
-        
-        for carta in $jugador_cartas; do
-            if ((carta >= 1 && carta <= 10)); then
-                # Si la carta está en el rango de 1-10, añadir una 0
-                cartas_convertidas="${cartas_convertidas}${carta}-O "
-            elif ((carta >= 11 && carta <= 20)); then
-                # Si la carta está en el rango de 11-20, restar 10 y añadir una C
-                carta=$((carta - 10))
-                cartas_convertidas="${cartas_convertidas}${carta}-C "
-            elif ((carta >= 21 && carta <= 30)); then
-                # Si la carta está en el rango de 21-30, restar 20 y añadir una E
-                carta=$((carta - 20))
-                cartas_convertidas="${cartas_convertidas}${carta}-E "
-            else
-                # En caso contrario, mantener la carta como está y añadir una B
-                carta=$((carta - 30))
-                cartas_convertidas="${cartas_convertidas}${carta}-B "
-            fi
+        for ((i = 0; i < numJugadores; i++)); do
+            jugador_cartas="${cartasJugadores[$i]}"
+            cartas_convertidas=""
+            
+            for carta in $jugador_cartas; do
+                if ((carta >= 1 && carta <= 10)); then
+                    # Si la carta está en el rango de 1-10, añadir una 0
+                    cartas_convertidas="${cartas_convertidas}${carta}-O "
+                elif ((carta >= 11 && carta <= 20)); then
+                    # Si la carta está en el rango de 11-20, restar 10 y añadir una C
+                    carta=$((carta - 10))
+                    cartas_convertidas="${cartas_convertidas}${carta}-C "
+                elif ((carta >= 21 && carta <= 30)); then
+                    # Si la carta está en el rango de 21-30, restar 20 y añadir una E
+                    carta=$((carta - 20))
+                    cartas_convertidas="${cartas_convertidas}${carta}-E "
+                else
+                    # En caso contrario, mantener la carta como está y añadir una B
+                    carta=$((carta - 30))
+                    cartas_convertidas="${cartas_convertidas}${carta}-B "
+                fi
+            done
+            
+            echo "Cartas del Jugador $((i + 1)): ${cartas_convertidas}"
         done
-        
-        echo "Cartas del Jugador $((i + 1)): ${cartas_convertidas}"
-    done
 
     echo "--------------------------------------------------"
     ## Imprimir el contenido de la mesa de oros en una sola línea
@@ -436,16 +447,6 @@ find_max() {
 
 bucle_jugabilidad() {
 
-    if [ -f "config.cfg" ]; then
-        source "config.cfg"
-        if [ -n "$ESTRATEGIA" ]; then
-            estrategia="$ESTRATEGIA"
-        else
-            echo "ERROR: La variable ESTRATEGIA no está definida en el archivo config.cfg"
-        fi
-    else
-        echo "ERROR: El archivo de configuración config.cfg no existe."
-    fi
     jugadas=$((jugadas + 1))
 
     clear
@@ -917,15 +918,43 @@ estrategia2() {
 }
 
 play() {
+ 
+    if test -f "config.cfg"; then
+        if test -r "config.cfg"; then
+            lineaJugadores=$(grep "JUGADORES=" "config.cfg")
+            if [ -z "$lineaJugadores" ]; then
+                echo "ERROR: La variable JUGADORES no está definida en el archivo config.cfg"
+                read -p "Pulse INTRO para continuar..."
+                return
+            fi
+
+            numJugadores=$(echo "$lineaJugadores" | cut -d'=' -f2)
+
+            if ! [[ $numJugadores =~ ^[2-4]$ ]]; then
+                echo "ERROR: El número de jugadores debe de ser 2, 3 o 4."
+                read -p "Pulse INTRO para continuar..."
+                return
+            fi
+
+            lineaEstrategia=$(grep "ESTRATEGIA=" "config.cfg")
+            if [ -z "$lineaEstrategia" ]; then
+                echo "ERROR: La variable ESTRATEGIA no está definida en el archivo config.cfg"
+            else
+                estrategia=$(echo "$lineaEstrategia" | cut -d'=' -f2)
+            fi
+        else
+            echo "ERROR: No se puede leer el archivo config.cfg."
+            read -p "Pulse INTRO para salir..."
+            exit
+        fi
+    else
+        echo "ERROR: El archivo de configuración config.cfg no existe."
+        read -p "Pulse INTRO para salir..."
+        exit
+    fi
 
     TIEMPO_INICIAL=$SECONDS
-    numJugadores=$(cat config.cfg | grep 'JUGADORES=' | cut -d'=' -f2)
 
-    if [[ ! $numJugadores =~ ^[2-4]$ ]]; then
-        echo "ERROR: El número de jugadores debe de ser 2, 3 o 4."
-        read -p "Pulse INTRO para continuar..."
-        return
-    fi
     echo "Comenzando una partida de 5illo con $numJugadores jugadores..."
     repartirCartas
     turno
@@ -1024,7 +1053,6 @@ imprimirPuestos() {
 }
 
 cargarDatosPartidaEnFicherolog() {
-
     fecha_actual=$(date +"%d/%m/%y")
     hora_actual=$(date +"%H:%M")
 
@@ -1048,7 +1076,16 @@ cargarDatosPartidaEnFicherolog() {
     done
 
     leerFicheroLog
-    echo -e "$fecha_actual|$hora_actual|$numJugadores|$elapsed_time|$rondas|$jugadorTurno|$puntosGanador|$cartasRestantes" >>"$ficheroLog"
+
+    if test -f "$ficheroLog"; then
+        if test -w "$ficheroLog"; then
+            echo -e "$fecha_actual|$hora_actual|$numJugadores|$elapsed_time|$rondas|$jugadorTurno|$puntosGanador|$cartasRestantes" >> "$ficheroLog"
+        else
+            echo "ERROR: No se puede escribir en el archivo de log $ficheroLog."
+        fi
+    else
+        echo "ERROR: El archivo de log $ficheroLog no existe."
+    fi
 }
 
 calculateStatistics() {
@@ -1160,6 +1197,48 @@ calculateLeaderboard() {
             done
         fi
 
+        if [[ "$cartas" != "-" && "$cartas" != *" * "* ]]; then
+            IFS="-" read -ra jugadores_cartas <<<"$cartas"
+            for jugador_cartas in "${jugadores_cartas[@]}"; do
+                cartas_array=($jugador_cartas)
+                cartas_int=0
+                for carta in "${cartas_array[@]}"; do
+                    if [[ "$carta" =~ ^[0-9]+$ ]]; then
+                        cartas_int=$((cartas_int + 1))
+                    fi
+                    if [ "$cartas_int" -gt "$cartasMax" ]; then
+                        cartasMax="$cartas_int"
+                    fi
+                done
+            done
+        fi
+        
+        for ((i = 0; i < numJugadores; i++)); do
+            jugador_cartas="${cartasJugadores[$i]}"
+            cartas_convertidas=""
+            
+            for carta in $jugador_cartas; do
+                if ((carta >= 1 && carta <= 10)); then
+                    # Si la carta está en el rango de 1-10, añadir una 0
+                    cartas_convertidas="${cartas_convertidas}${carta}-O "
+                elif ((carta >= 11 && carta <= 20)); then
+                    # Si la carta está en el rango de 11-20, restar 10 y añadir una C
+                    carta=$((carta - 10))
+                    cartas_convertidas="${cartas_convertidas}${carta}-C "
+                elif ((carta >= 21 && carta <= 30)); then
+                    # Si la carta está en el rango de 21-30, restar 20 y añadir una E
+                    carta=$((carta - 20))
+                    cartas_convertidas="${cartas_convertidas}${carta}-E "
+                else
+                    # En caso contrario, mantener la carta como está y añadir una B
+                    carta=$((carta - 30))
+                    cartas_convertidas="${cartas_convertidas}${carta}-B "
+                fi
+            done
+            
+            echo "Cartas del Jugador $((i + 1)): ${cartas_convertidas}"
+    done
+        
         # Comprobar duración de la partida
         if [ "$tiempo_int" -lt "$duracion_corta" ]; then
             duracion_corta="$tiempo_int"
@@ -1192,6 +1271,7 @@ calculateLeaderboard() {
             partida_mas_cartas="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
         fi
     done <"$1" # $1 es el nombre del fichero de log pasado como argumento
+
 
     # Mostrar los datos de las partidas destacadas
     echo "Partida más corta:"

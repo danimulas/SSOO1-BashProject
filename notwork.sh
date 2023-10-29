@@ -189,6 +189,7 @@ imprimirCartasIntro() {
     echo "Mesa Bastos: ${mesaBastos[*]}"
     echo "--------------------------------------------------"
 }
+
 imprimirCartas() {
     for ((i = 0; i < numJugadores; i++)); do
         echo "Cartas del Jugador $((i + 1)): ${cartasJugadores[$i]}"
