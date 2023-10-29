@@ -229,38 +229,34 @@ repartirCartas() {
     fi
 }
 
-decodificarCarta2(){
-    
-}
-
 imprimirCartasIntro() {
 
     read -p "Pulse INTRO para continuar..."
-        for ((i = 0; i < numJugadores; i++)); do
-            jugador_cartas="${cartasJugadores[$i]}"
-            cartas_convertidas=""
-            
-            for carta in $jugador_cartas; do
-                if ((carta >= 1 && carta <= 10)); then
-                    # Si la carta está en el rango de 1-10, añadir una 0
-                    cartas_convertidas="${cartas_convertidas}${carta}-O "
-                elif ((carta >= 11 && carta <= 20)); then
-                    # Si la carta está en el rango de 11-20, restar 10 y añadir una C
-                    carta=$((carta - 10))
-                    cartas_convertidas="${cartas_convertidas}${carta}-C "
-                elif ((carta >= 21 && carta <= 30)); then
-                    # Si la carta está en el rango de 21-30, restar 20 y añadir una E
-                    carta=$((carta - 20))
-                    cartas_convertidas="${cartas_convertidas}${carta}-E "
-                else
-                    # En caso contrario, mantener la carta como está y añadir una B
-                    carta=$((carta - 30))
-                    cartas_convertidas="${cartas_convertidas}${carta}-B "
-                fi
-            done
-            
-            echo "Cartas del Jugador $((i + 1)): ${cartas_convertidas}"
+     for ((i = 0; i < numJugadores; i++)); do
+        jugador_cartas="${cartasJugadores[$i]}"
+        cartas_convertidas=""
+        
+        for carta in $jugador_cartas; do
+            if ((carta >= 1 && carta <= 10)); then
+                # Si la carta está en el rango de 1-10, añadir una 0
+                cartas_convertidas="${cartas_convertidas}${carta}-O "
+            elif ((carta >= 11 && carta <= 20)); then
+                # Si la carta está en el rango de 11-20, restar 10 y añadir una C
+                carta=$((carta - 10))
+                cartas_convertidas="${cartas_convertidas}${carta}-C "
+            elif ((carta >= 21 && carta <= 30)); then
+                # Si la carta está en el rango de 21-30, restar 20 y añadir una E
+                carta=$((carta - 20))
+                cartas_convertidas="${cartas_convertidas}${carta}-E "
+            else
+                # En caso contrario, mantener la carta como está y añadir una B
+                carta=$((carta - 30))
+                cartas_convertidas="${cartas_convertidas}${carta}-B "
+            fi
         done
+        
+        echo "Cartas del Jugador $((i + 1)): ${cartas_convertidas}"
+    done
 
     echo "--------------------------------------------------"
     ## Imprimir el contenido de la mesa de oros en una sola línea
@@ -1197,48 +1193,6 @@ calculateLeaderboard() {
             done
         fi
 
-        if [[ "$cartas" != "-" && "$cartas" != *" * "* ]]; then
-            IFS="-" read -ra jugadores_cartas <<<"$cartas"
-            for jugador_cartas in "${jugadores_cartas[@]}"; do
-                cartas_array=($jugador_cartas)
-                cartas_int=0
-                for carta in "${cartas_array[@]}"; do
-                    if [[ "$carta" =~ ^[0-9]+$ ]]; then
-                        cartas_int=$((cartas_int + 1))
-                    fi
-                    if [ "$cartas_int" -gt "$cartasMax" ]; then
-                        cartasMax="$cartas_int"
-                    fi
-                done
-            done
-        fi
-        
-        for ((i = 0; i < numJugadores; i++)); do
-            jugador_cartas="${cartasJugadores[$i]}"
-            cartas_convertidas=""
-            
-            for carta in $jugador_cartas; do
-                if ((carta >= 1 && carta <= 10)); then
-                    # Si la carta está en el rango de 1-10, añadir una 0
-                    cartas_convertidas="${cartas_convertidas}${carta}-O "
-                elif ((carta >= 11 && carta <= 20)); then
-                    # Si la carta está en el rango de 11-20, restar 10 y añadir una C
-                    carta=$((carta - 10))
-                    cartas_convertidas="${cartas_convertidas}${carta}-C "
-                elif ((carta >= 21 && carta <= 30)); then
-                    # Si la carta está en el rango de 21-30, restar 20 y añadir una E
-                    carta=$((carta - 20))
-                    cartas_convertidas="${cartas_convertidas}${carta}-E "
-                else
-                    # En caso contrario, mantener la carta como está y añadir una B
-                    carta=$((carta - 30))
-                    cartas_convertidas="${cartas_convertidas}${carta}-B "
-                fi
-            done
-            
-            echo "Cartas del Jugador $((i + 1)): ${cartas_convertidas}"
-    done
-        
         # Comprobar duración de la partida
         if [ "$tiempo_int" -lt "$duracion_corta" ]; then
             duracion_corta="$tiempo_int"
@@ -1271,7 +1225,6 @@ calculateLeaderboard() {
             partida_mas_cartas="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
         fi
     done <"$1" # $1 es el nombre del fichero de log pasado como argumento
-
 
     # Mostrar los datos de las partidas destacadas
     echo "Partida más corta:"
