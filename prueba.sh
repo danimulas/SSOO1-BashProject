@@ -1,3 +1,5 @@
+#INTENTAR HACER QUE GUARDE EN EL ARRAY TODOS LOS CARACTERES, PERO SI HAY DOS NUMEROS JUNTOS QUE LOS GUARDE COMO UNO SOLO
+
 function convertir_cartas() {
     local cartas="$1"
     local cartas_convertidas=""
