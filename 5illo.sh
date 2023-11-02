@@ -427,7 +427,7 @@ bucle_jugabilidad() {
             estrategia2
             ;;
         *)
-            echo "ERROR. La estrategia no es válida. Elije la estrategia [0, 1 o 2]."
+            echo "ERROR: La estrategia no es válida. Elije la estrategia [0, 1 o 2]."
             read -p "Pulse INTRO para continuar..."
             ;;
         esac
@@ -545,7 +545,7 @@ jugarManual() {
                 clear
                 break 
             else
-                echo "ERROR. La carta seleccionada no es válida. Por favor, elige una carta válida."
+                echo "ERROR: La carta seleccionada no es válida. Por favor, elige una carta válida."
             fi
         done
     fi
@@ -823,7 +823,8 @@ play() {
                 lineaJugadores=$(grep "JUGADORES=" "config.cfg")
                 if [ -z "$lineaJugadores" ]; then
                     echo "ERROR: La variable JUGADORES no está definida en el archivo config.cfg"
-                    read -p "Pulse INTRO para continuar..."
+                    read -p "Pulse INTRO para salir..."
+                    exit 1
                     return
                 fi
 
@@ -831,15 +832,23 @@ play() {
 
                 if ! [[ $numJugadores =~ ^[2-4]$ ]]; then
                     echo "ERROR: El número de jugadores debe de ser 2, 3 o 4."
-                    read -p "Pulse INTRO para continuar..."
+                    read -p "Pulse INTRO para salir..."
+                    exit 1
                     return
                 fi
 
                 lineaEstrategia=$(grep "ESTRATEGIA=" "config.cfg")
                 if [ -z "$lineaEstrategia" ]; then
                     echo "ERROR: La variable ESTRATEGIA no está definida en el archivo config.cfg"
-                else
-                    estrategia=$(echo "$lineaEstrategia" | cut -d'=' -f2)
+                    read -p "Pulse INTRO para salir..."
+                    exit 1
+                fi
+
+                estrategia=$(echo "$lineaEstrategia" | cut -d'=' -f2)
+                if ! [[ $estrategia =~ ^[0-2]$ ]]; then
+                    echo "ERROR: El valor de ESTRATEGIA debe ser 0, 1 o 2."
+                    read -p "Pulse INTRO para salir..."
+                    exit 1
                 fi
             else
                 echo "ERROR: No tienes permisos de ejecución para el archivo config.cfg."
@@ -1014,12 +1023,10 @@ calculateStatistics() {
 
     # Leer el fichero de log línea por línea
     while IFS='|' read -r fecha hora jugadores tiempo rondas ganador puntos cartas; do
-        # Calcular estadísticas
         totalPartidas=$((totalPartidas + 1))
         totalTiempo=$(bc -l <<<"$totalTiempo + $tiempo")
         totalPuntos=$(bc -l <<<"$totalPuntos + $puntos")
 
-        # Verificar el jugador ganador y contar las partidas ganadas por cada jugador
         case "$ganador" in
         1)
             partidasGanadas1=$((partidasGanadas1 + 1))
@@ -1034,9 +1041,8 @@ calculateStatistics() {
             partidasGanadas4=$((partidasGanadas4 + 1))
             ;;
         esac
-    done <"$1" # $1 es el nombre del fichero de log pasado como argumento
+    done <"$1" 
 
-    # Calcular medias y porcentajes
     mediaTiempo=$(bc -l <<<"$totalTiempo / $totalPartidas")
     mediaPuntos=$(bc -l <<<"$totalPuntos / $totalPartidas")
     porcentajeWin1=$(bc -l <<<"($partidasGanadas1 / $totalPartidas) * 100")
@@ -1044,7 +1050,6 @@ calculateStatistics() {
     porcentajeWin3=$(bc -l <<<"($partidasGanadas3 / $totalPartidas) * 100")
     porcentajeWin4=$(bc -l <<<"($partidasGanadas4 / $totalPartidas) * 100")
 
-    # Mostrar estadísticas
     echo "Número total de partidas jugadas: $totalPartidas"
     echo "Media de los tiempos de todas las partidas jugadas: $mediaTiempo"
     echo "Tiempo total invertido en todas las partidas: $totalTiempo"
@@ -1056,7 +1061,6 @@ calculateStatistics() {
 }
 
 calculateLeaderboard() {
-    # Variables para almacenar los datos de las partidas destacadas
     partidaMasCorta=""
     partidaMasLarga=""
     partidaMasRondas=""
@@ -1064,7 +1068,6 @@ calculateLeaderboard() {
     partidaMasPuntos=""
     partidaMasCartas=""
 
-    # Inicializar variables para comparaciones
     duracionCorta=9999999
     duracionLarga=0
     maxRondas=0
@@ -1102,7 +1105,6 @@ calculateLeaderboard() {
             fi
         done
 
-        # Comprobar duración de la partida
         if [ "$tiempoInt" -lt "$duracionCorta" ]; then
             duracionCorta="$tiempoInt"
             partidaMasCorta="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
@@ -1112,7 +1114,6 @@ calculateLeaderboard() {
             partidaMasLarga="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
         fi
 
-        # Comprobar número de rondas
         if [ "$rondasInt" -gt "$maxRondas" ]; then
             maxRondas="$rondasInt"
             partidaMasRondas="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
@@ -1122,20 +1123,17 @@ calculateLeaderboard() {
             PartidaMenosRondas="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
         fi
 
-        # Comprobar número de puntos
         if [ "$puntosInt" -gt "$maxPoints" ]; then
             maxPoints="$puntosInt"
             partidaMasPuntos="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
         fi
 
-        # Comprobar número de cartas
         if [ "$cartasMax" -gt "$maxCartas" ]; then
             maxCartas="$cartasMax"
             partidaMasCartas="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
         fi
-    done <"$1" # $1 es el nombre del fichero de log pasado como argumento
+    done <"$1" 
 
-    # Mostrar los datos de las partidas destacadas
     echo "Partida más corta:"
     echo "$partidaMasCorta"
     echo ""
@@ -1208,7 +1206,7 @@ while true; do
         showLeaderboard
         ;;
     S | s)
-        echo "Saliendo del juego. ¡Hasta luego!"
+        echo "Saliendo del juego..."
         exit
         ;;
     *)
