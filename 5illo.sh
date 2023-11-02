@@ -85,38 +85,27 @@ S)SALIR"
 leerFicheroLog() {
     if test -e "config.cfg"; then # Comprobamos que existe
     # Verificar si el archivo es ejecutable
-        if test -x "config.cfg"; then
-            if test -r "config.cfg"; then # Comprobamos que se puede leer
-                if test $(grep -c "LOG=" config.cfg) -gt 0; then # Comprobamos que la línea "LOG=" existe
-                    linea=$(grep "LOG=" config.cfg)
-                    ficheroLog=${linea#*=}
-                    if ! test -f "$ficheroLog"; then
-                        echo "ERROR: El fichero de log ubicado en $ficheroLog no existe."
+        if test -r "config.cfg"; then # Comprobamos que se puede leer
+            if test $(grep -c "LOG=" config.cfg) -gt 0; then # Comprobamos que la línea "LOG=" existe
+                linea=$(grep "LOG=" config.cfg)
+                ficheroLog=${linea#*=}
+                if ! test -f "$ficheroLog"; then
+                    echo "ERROR: El fichero de log ubicado en $ficheroLog no existe."
+                    read -p "Pulse INTRO para salir..."
+                    exit
+                else
+                    if ! test -r "$ficheroLog"; then
+                        echo "ERROR: No se puede leer el fichero de log ubicado en $ficheroLog."
                         read -p "Pulse INTRO para salir..."
                         exit
-                    else
-                        if ! test -r "$ficheroLog"; then
-                            echo "ERROR: No se puede leer el fichero de log ubicado en $ficheroLog."
-                            read -p "Pulse INTRO para salir..."
-                            exit
-                        else
-                            if ! test -x "$ficheroLog"; then
-                                echo "ERROR: No se puede ejecutar el fichero de log ubicado en $ficheroLog."
-                                read -p "Pulse INTRO para salir..."
-                                exit
-                            fi
-                        fi
                     fi
-                else
-                    echo "ERROR: No se encontró la línea 'LOG=' en el archivo config.cfg."
-                    read -p "Pulse INTRO para salir..."
                 fi
             else
-                echo "ERROR: No se puede leer el archivo config.cfg."
+                echo "ERROR: No se encontró la línea 'LOG=' en el archivo config.cfg."
                 read -p "Pulse INTRO para salir..."
             fi
         else
-            echo "ERROR: El archivo config.cfg no es ejecutable."
+            echo "ERROR: No se puede leer el archivo config.cfg."
             read -p "Pulse INTRO para salir..."
         fi
     else
@@ -166,30 +155,25 @@ changeConfig() {
     # Verificar si el archivo es escribible
         if test -w "config.cfg"; then
             # Verificar si el archivo es ejecutable
-            if test -x "config.cfg"; then
-                echo "JUGADORES=$jugadores" > "config.cfg"
-                if test $? -ne 0; then
-                    echo "Error al escribir la configuración JUGADORES en config.cfg"
-                    exit 1
-                fi
-
-                echo "ESTRATEGIA=$estrategia" >> "config.cfg"
-                if test $? -ne 0; then
-                    echo "Error al escribir la configuración ESTRATEGIA en config.cfg"
-                    exit 1
-                fi
-
-                echo "LOG=$ficheroLog" >> "config.cfg"
-                if test $? -ne 0; then
-                    echo "Error al escribir la configuración LOG en config.cfg"
-                    exit 1
-                fi
-
-                echo "Configuración escrita con éxito en config.cfg"
-            else
-                echo "Error: El archivo config.cfg no es ejecutable."
+            echo "JUGADORES=$jugadores" > "config.cfg"
+            if test $? -ne 0; then
+                echo "Error al escribir la configuración JUGADORES en config.cfg"
                 exit 1
             fi
+
+            echo "ESTRATEGIA=$estrategia" >> "config.cfg"
+            if test $? -ne 0; then
+                echo "Error al escribir la configuración ESTRATEGIA en config.cfg"
+                exit 1
+            fi
+
+            echo "LOG=$ficheroLog" >> "config.cfg"
+            if test $? -ne 0; then
+                echo "Error al escribir la configuración LOG en config.cfg"
+                exit 1
+            fi
+
+            echo "Configuración escrita con éxito en config.cfg"
         else
             echo "Error: El archivo config.cfg no es escribible."
             exit 1
@@ -819,41 +803,35 @@ play() {
  
     if test -f "config.cfg"; then
         if test -r "config.cfg"; then
-            if test -x "config.cfg"; then
-                lineaJugadores=$(grep "JUGADORES=" "config.cfg")
-                if [ -z "$lineaJugadores" ]; then
-                    echo "ERROR: La variable JUGADORES no está definida en el archivo config.cfg"
-                    read -p "Pulse INTRO para salir..."
-                    exit 1
-                    return
-                fi
-
-                numJugadores=$(echo "$lineaJugadores" | cut -d'=' -f2)
-
-                if ! [[ $numJugadores =~ ^[2-4]$ ]]; then
-                    echo "ERROR: El número de jugadores debe de ser 2, 3 o 4."
-                    read -p "Pulse INTRO para salir..."
-                    exit 1
-                    return
-                fi
-
-                lineaEstrategia=$(grep "ESTRATEGIA=" "config.cfg")
-                if [ -z "$lineaEstrategia" ]; then
-                    echo "ERROR: La variable ESTRATEGIA no está definida en el archivo config.cfg"
-                    read -p "Pulse INTRO para salir..."
-                    exit 1
-                fi
-
-                estrategia=$(echo "$lineaEstrategia" | cut -d'=' -f2)
-                if ! [[ $estrategia =~ ^[0-2]$ ]]; then
-                    echo "ERROR: El valor de ESTRATEGIA debe ser 0, 1 o 2."
-                    read -p "Pulse INTRO para salir..."
-                    exit 1
-                fi
-            else
-                echo "ERROR: No tienes permisos de ejecución para el archivo config.cfg."
+            lineaJugadores=$(grep "JUGADORES=" "config.cfg")
+            if [ -z "$lineaJugadores" ]; then
+                echo "ERROR: La variable JUGADORES no está definida en el archivo config.cfg"
                 read -p "Pulse INTRO para salir..."
-                exit
+                exit 1
+                return
+            fi
+
+            numJugadores=$(echo "$lineaJugadores" | cut -d'=' -f2)
+
+            if ! [[ $numJugadores =~ ^[2-4]$ ]]; then
+                echo "ERROR: El número de jugadores debe de ser 2, 3 o 4."
+                read -p "Pulse INTRO para salir..."
+                exit 1
+                return
+            fi
+
+            lineaEstrategia=$(grep "ESTRATEGIA=" "config.cfg")
+            if [ -z "$lineaEstrategia" ]; then
+                echo "ERROR: La variable ESTRATEGIA no está definida en el archivo config.cfg"
+                read -p "Pulse INTRO para salir..."
+                exit 1
+            fi
+
+            estrategia=$(echo "$lineaEstrategia" | cut -d'=' -f2)
+            if ! [[ $estrategia =~ ^[0-2]$ ]]; then
+                echo "ERROR: El valor de ESTRATEGIA debe ser 0, 1 o 2."
+                read -p "Pulse INTRO para salir..."
+                exit 1
             fi
         else
             echo "ERROR: No puedes leer el archivo config.cfg."
@@ -996,14 +974,10 @@ cargarDatosPartidaEnFicherolog() {
     leerFicheroLog
 
     if test -f "$ficheroLog"; then
-        if test -x "$ficheroLog"; then
-            if test -w "$ficheroLog"; then
-                echo -e "$fechaActual|$horaActual|$numJugadores|$elapsed_time|$rondas|$jugadorTurno|$puntosGanador|$cartasRestantes" >> "$ficheroLog"
-            else
-                echo "ERROR: No se puede escribir en el archivo de log $ficheroLog."
-            fi
+        if test -w "$ficheroLog"; then
+            echo -e "$fechaActual|$horaActual|$numJugadores|$elapsed_time|$rondas|$jugadorTurno|$puntosGanador|$cartasRestantes" >> "$ficheroLog"
         else
-            echo "ERROR: No tienes permisos de ejecución para el archivo de log $ficheroLog."
+            echo "ERROR: No se puede escribir en el archivo de log $ficheroLog."
         fi
     else
         echo "ERROR: El archivo de log $ficheroLog no existe."
