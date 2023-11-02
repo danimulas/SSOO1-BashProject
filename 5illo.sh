@@ -52,7 +52,7 @@ EOF
 comprobarArgumentos() {
 
     if test "$1" && test "$1" != "-g"; then
-        echo -e "ERROR: Parámetro inválido. Para ejecutar el programa, escribe 'domino.sh [-g]'."
+        echo -e "ERROR: Parámetro inválido. Para mostrar los programadores y estrategias, escribe 'domino.sh [-g]'."
         exit
     fi
 
@@ -83,23 +83,45 @@ S)SALIR"
 }
 
 leerFicheroLog() {
-    if test -e "config.cfg"; then 
-        if test -r "config.cfg"; then 
-            if test $(grep -c "LOG=" config.cfg) -gt 0; then #comprobamos que la linea "LOG=" existe
-                linea=$(grep "LOG=" config.cfg)
-                ficheroLog=${linea#*=}
-                
-                if ! test -f "$ficheroLog"; then #comprobamos que el fichero de log existe
-                    echo "ERROR: El fichero de log ubicado en $ficheroLog no existe."
+    if test -e "config.cfg"; then # Comprobamos que existe
+    # Verificar si el archivo es ejecutable
+        if test -x "config.cfg"; then
+            if test -r "config.cfg"; then # Comprobamos que se puede leer
+                if test $(grep -c "LOG=" config.cfg) -gt 0; then # Comprobamos que la línea "LOG=" existe
+                    linea=$(grep "LOG=" config.cfg)
+                    ficheroLog=${linea#*=}
+                    if ! test -f "$ficheroLog"; then
+                        echo "ERROR: El fichero de log ubicado en $ficheroLog no existe."
+                        read -p "Pulse INTRO para salir..."
+                        exit
+                    else
+                        if ! test -r "$ficheroLog"; then
+                            echo "ERROR: No se puede leer el fichero de log ubicado en $ficheroLog."
+                            read -p "Pulse INTRO para salir..."
+                            exit
+                        else
+                            if ! test -x "$ficheroLog"; then
+                                echo "ERROR: No se puede ejecutar el fichero de log ubicado en $ficheroLog."
+                                read -p "Pulse INTRO para salir..."
+                                exit
+                            fi
+                        fi
+                    fi
+                else
+                    echo "ERROR: No se encontró la línea 'LOG=' en el archivo config.cfg."
+                    read -p "Pulse INTRO para salir..."
                 fi
             else
-            echo "ERROR: No se encontró la línea 'LOG=' en el archivo config.cfg."
+                echo "ERROR: No se puede leer el archivo config.cfg."
+                read -p "Pulse INTRO para salir..."
             fi
         else
-            echo "ERROR: No se puede leer el archivo config.cfg."
+            echo "ERROR: El archivo config.cfg no es ejecutable."
+            read -p "Pulse INTRO para salir..."
         fi
     else
         echo "ERROR: El archivo config.cfg no existe."
+        read -p "Pulse INTRO para salir..."
     fi
 
 }
@@ -108,6 +130,7 @@ changeConfig() {
     echo "Configuración actual:"
     cat config.cfg
 
+    # Verificar si el archivo config.cfg existe y se puede abrir.
     if ! test -e "config.cfg"; then
         echo "ERROR: El archivo 'config.cfg' no existe."
         return
@@ -118,45 +141,55 @@ changeConfig() {
         return
     fi
 
+    # Solicitar el nuevo número de jugadores y verificar la entrada.
     read -p "Nuevo número de jugadores (2-4): " jugadores
     while ! [[ "$jugadores" =~ ^[2-4]$ ]]; do
         echo "ERROR: Por favor, introduzca un número válido de jugadores (2-4)."
         read -p "Nuevo número de jugadores (2-4): " jugadores
     done
 
+    # Solicitar la nueva estrategia y verificar la entrada.
     read -p "Nueva estrategia (0, 1 o 2): " estrategia
     while ! [[ "$estrategia" =~ ^[0-2]$ ]]; do
         echo "ERROR: Por favor, introduzca una estrategia válida (0, 1 o 2)."
         read -p "Nueva estrategia (0, 1 o 2): " estrategia
     done
-
-    read -p "Introduzca la ruta del fichero log: " ficheroLog
+    # Solicitar la ubicación del fichero log y verificar si es un directorio existente.
+    read -p "Introduzca la ubicación del fichero log (por ejemplo, ./fichero.log): " ficheroLog
     while ! test -f "$ficheroLog" || ! test -s "$ficheroLog"; do 
         echo "ERROR: La ruta proporcionada no es válida o el archivo está vacío."
         read -p "Por favor, introduzca una ruta válida: " ficheroLog
     done
 
+    # Actualizar configuración si todas las entradas son válidas.
     if test -e "config.cfg"; then
+    # Verificar si el archivo es escribible
         if test -w "config.cfg"; then
-            echo "JUGADORES=$jugadores" > "config.cfg"
-            if test $? -ne 0; then
-                echo "Error al escribir la configuración JUGADORES en config.cfg"
+            # Verificar si el archivo es ejecutable
+            if test -x "config.cfg"; then
+                echo "JUGADORES=$jugadores" > "config.cfg"
+                if test $? -ne 0; then
+                    echo "Error al escribir la configuración JUGADORES en config.cfg"
+                    exit 1
+                fi
+
+                echo "ESTRATEGIA=$estrategia" >> "config.cfg"
+                if test $? -ne 0; then
+                    echo "Error al escribir la configuración ESTRATEGIA en config.cfg"
+                    exit 1
+                fi
+
+                echo "LOG=$ficheroLog" >> "config.cfg"
+                if test $? -ne 0; then
+                    echo "Error al escribir la configuración LOG en config.cfg"
+                    exit 1
+                fi
+
+                echo "Configuración escrita con éxito en config.cfg"
+            else
+                echo "Error: El archivo config.cfg no es ejecutable."
                 exit 1
             fi
-
-            echo "ESTRATEGIA=$estrategia" >> "config.cfg"
-            if test $? -ne 0; then
-                echo "Error al escribir la configuración ESTRATEGIA en config.cfg"
-                exit 1
-            fi
-
-            echo "LOG=$ficheroLog" >> "config.cfg"
-            if test $? -ne 0; then
-                echo "Error al escribir la configuración LOG en config.cfg"
-                exit 1
-            fi
-
-            echo "Configuración escrita con éxito en config.cfg"
         else
             echo "Error: El archivo config.cfg no es escribible."
             exit 1
@@ -165,6 +198,7 @@ changeConfig() {
         echo "Error: El archivo config.cfg no existe."
         exit 1
     fi
+
     echo -e "\nCONFIGURACIÓN ACTUALIZADA CORRECTAMENTE"
     read -p "Pulse INTRO para continuar..."
 }
@@ -174,13 +208,13 @@ barajarCartas() {
     cartas=()
 
     numero=1
-    while [ $numero -le 10 ]; do
+    while [ $numero -le 40 ]; do
         cartas+=("$numero")
         numero=$((numero + 1))
     done
 
     local i j tmp
-    for ((i = 9; i > 0; i--)); do
+    for ((i = 39; i > 0; i--)); do
         j=$((RANDOM % (i + 1)))
         tmp=${cartas[i]}
         cartas[i]=${cartas[j]}
@@ -188,48 +222,10 @@ barajarCartas() {
     done
 }
 
-cargarDatosPartidaEnFicheroLog() {
-    fechaActual=$(date +"%d/%m/%y")
-    horaActual=$(date +"%H:%M")
-
-    cartasRestantes=""
-
-    for ((i = 0; i < 4; i++)); do
-        cartasJugador=${cartasJugadores[$i]}
-        IFS=' ' read -ra cartasArray <<<"$cartasJugador"
-
-        numCartas=${#cartasArray[@]}
-
-        if [ $i -lt $numJugadores ]; then
-            if [ $numCartas -eq 0 ]; then
-                cartasRestantes+="0"
-            else
-                cartasRestantes+="$numCartas"
-            fi
-        else
-            cartasRestantes+="*"
-        fi
-        if [ $i -lt 3 ]; then
-            cartasRestantes+="-"
-        fi
-    done
-
-    leerFicheroLog
-    echo "$fechaActual|$horaActual|$numJugadores|$elapsedTime|$rondas|$jugadorTurno|$puntosGanador|$cartasRestantes"
-    if test -f "$ficheroLog"; then
-        if test -w "$ficheroLog"; then
-            echo -e "$fechaActual|$horaActual|$numJugadores|$elapsedTime|$rondas|$jugadorTurno|$puntosGanador|$cartasRestantes" >> "$ficheroLog"
-        else
-            echo "ERROR: No se puede escribir en el archivo de log $ficheroLog."
-        fi
-    else
-        echo "ERROR: El archivo de log $ficheroLog no existe."
-    fi
-}
-
 repartirCartas() {
 
-    local cartasPorJugador=$((10 / numJugadores))
+    local cartasPorJugador=$((40 / numJugadores))
+    local cartasExtras=$((40 % numJugadores))
 
     barajarCartas
 
@@ -250,86 +246,39 @@ repartirCartas() {
         cartasJugadores+=("${cartasJugadorActual[@]}")
     done
 
-    #si el numero de jugadores es 3, le repartimos al jugador 1 una carta extra
-    if [ "$numJugadores" -eq 3 ]; then
-        cartasJugadores+="${cartas[9]}"
+    if ((cartasExtras > 0)); then
+        carta=${cartas[39]}
+        cartasJugadores[0]+="$carta "
     fi
 }
 
-imprimirCartasIntro() {
 
-    read -p "Pulse INTRO para continuar..."
-     for ((i = 0; i < numJugadores; i++)); do
-        jugadorCartas="${cartasJugadores[$i]}"
-        cartas_convertidas=""
-        
-        for carta in $jugadorCartas; do
-            if ((carta >= 1 && carta <= 10)); then
-                cartas_convertidas="${cartas_convertidas}${carta}-O "
-            elif ((carta >= 11 && carta <= 20)); then
-                carta=$((carta - 10))
-                cartas_convertidas="${cartas_convertidas}${carta}-C "
-            elif ((carta >= 21 && carta <= 30)); then
-                carta=$((carta - 20))
-                cartas_convertidas="${cartas_convertidas}${carta}-E "
-            else
-                carta=$((carta - 30))
-                cartas_convertidas="${cartas_convertidas}${carta}-B "
-            fi
-        done
-        
-        echo "Cartas del Jugador $((i + 1)): ${cartas_convertidas}"
-    done
-
-    echo "--------------------------------------------------"
-
-    echo -n "Cartas de Oros: "
-    for ((i = 0; i < ${#mesaOros[@]}; i++)); do
-        echo -n "${mesaOros[$i]} "
-    done
-    echo
-
-    echo -n "Cartas de Copas: "
-    for ((i = 0; i < ${#mesaCopas[@]}; i++)); do
-            echo -n "$((mesaCopas[$i] - 10)) "
-    done
-    echo
-
-    echo -n "Cartas de Espadas: "
-    for ((i = 0; i < ${#mesaEspadas[@]}; i++)); do
-            echo -n "$((mesaEspadas[$i] - 20)) "
-    done
-    echo
-
-    echo -n "Cartas de Bastos: "
-    for ((i = 0; i < ${#mesaBastos[@]}; i++)); do
-            echo -n "$((mesaBastos[$i] - 30)) "
-    done
-    echo""
-    echo "--------------------------------------------------"
-}
 imprimirCartas() {
 
     for ((i = 0; i < numJugadores; i++)); do
-        jugadorCartas="${cartasJugadores[$i]}"
-        cartas_convertidas=""
+        cartasJugador="${cartasJugadores[$i]}"
+        cartasTemp=""
         
-        for carta in $jugadorCartas; do
+        for carta in $cartasJugador; do
             if ((carta >= 1 && carta <= 10)); then
-                cartas_convertidas="${cartas_convertidas}${carta}-O "
+                # Si la carta está en el rango de 1-10, añadir una 0
+                cartasTemp="${cartasTemp}${carta}-O "
             elif ((carta >= 11 && carta <= 20)); then
+                # Si la carta está en el rango de 11-20, restar 10 y añadir una C
                 carta=$((carta - 10))
-                cartas_convertidas="${cartas_convertidas}${carta}-C "
+                cartasTemp="${cartasTemp}${carta}-C "
             elif ((carta >= 21 && carta <= 30)); then
+                # Si la carta está en el rango de 21-30, restar 20 y añadir una E
                 carta=$((carta - 20))
-                cartas_convertidas="${cartas_convertidas}${carta}-E "
+                cartasTemp="${cartasTemp}${carta}-E "
             else
+                # En caso contrario, mantener la carta como está y añadir una B
                 carta=$((carta - 30))
-                cartas_convertidas="${cartas_convertidas}${carta}-B "
+                cartasTemp="${cartasTemp}${carta}-B "
             fi
         done
         
-        echo "Cartas del Jugador $((i + 1)): ${cartas_convertidas}"
+        echo "Cartas del Jugador $((i + 1)): ${cartasTemp}"
     done
 
     echo "--------------------------------------------------"
@@ -359,8 +308,6 @@ imprimirCartas() {
     echo""
     echo "--------------------------------------------------"
 }
-
-
 
 eliminarCarta() {
     for ((i = 0; i < ${#cartasJugadores[@]}; i++)); do
@@ -404,7 +351,7 @@ turno() {
         for carta in "${cartasArray[@]}"; do
             if [ "$carta" -eq "$numeroEliminar" ]; then
                 jugadorTurno=$((i + 1))
-                break 2
+                break 2 # Sale del bucle más externo
             fi
         done
     done
@@ -418,18 +365,19 @@ turno() {
         jugarManualInicio
     fi
     eliminarCarta
-    imprimirCartasIntro
+    read -p "Pulse INTRO para continuar..."
+    imprimirCartas
     pasar_turno
     $jugadas = 0
     while $jugar; do
-        bucleJugabilidad
+        bucle_jugabilidad
         read -p "Pulse INTRO para continuar..."
         showMenu
     done
 
 }
 
-encontrarMinimo() {
+find_min() {
     local min="$1"
     shift
     for num in "$@"; do
@@ -439,7 +387,7 @@ encontrarMinimo() {
 }
 
 
-encontrarMaximo() {
+find_max() {
 
     local max="$1"
     shift
@@ -451,7 +399,7 @@ encontrarMaximo() {
 
 
 
-bucleJugabilidad() {
+bucle_jugabilidad() {
 
     jugadas=$((jugadas + 1))
 
@@ -488,12 +436,12 @@ bucleJugabilidad() {
     if $cartaValida; then
         eliminarCarta
         if [ "${cartasJugadores[$((jugadorTurno - 1))]}" == "" ]; then
-            tiempoFinal=$SECONDS
-            elapsedTime=$((tiempoFinal - tiempoInicial))
+            TIEMPO_FINAL=$SECONDS
+            elapsed_time=$((TIEMPO_FINAL - TIEMPO_INICIAL))
             sumarPuntos
             echo "EL JUGADOR $jugadorTurno HA GANADO LA PARTIDA CON $puntosGanador PUNTOS!!"
             imprimirPuestos
-            echo "LA PARTIDA HA DURADO $elapsedTime SEGUNDOS"
+            echo "LA PARTIDA HA DURADO $elapsed_time SEGUNDOS"
             rondas=$(echo "scale=0; $jugadas / $numJugadores" | bc)
             cargarDatosPartidaEnFicherolog
             jugar=false
@@ -555,21 +503,16 @@ jugarManual() {
     imprimirCartas
 
     posibilidad=false
-    posibilidadOros=0
-    posibilidadCopas=0
-    posibilidadEspadas=0
-    posibilidadBastos=0
 
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
         carta="${cartasNumeros[$i]}"
-        if (
-            [ "$carta" -eq "$((min_mesaOros - 1))" ] || [ "$carta" -eq "$((max_mesaOros + 1))" ] ||
-            ([ "$carta" -ge 11 ] && [ "$carta" -eq "$((min_mesaCopas - 1))" ] && [ "$carta" -ne 1 ]) ||
-            ([ "$carta" -le 20 ] && [ "$carta" -eq "$((max_mesaCopas + 1))" ] && [ "$carta" -ge 11 ]) ||
-            ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ]) ||
-            ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ] && [ "$carta" -ge 21 ]) ||
-            ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ]) ||
-            ([ "$carta" -eq "$((max_mesaBastos + 1))" ] && [ "$carta" -ge 31 ]) || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
+        if ([ "$carta" -eq "$((minMesaOros - 1))" ] || [ "$carta" -eq "$((maxMesaOros + 1))" ] ||
+            ([ "$carta" -ge 11 ] && [ "$carta" -eq "$((minMesaCopa - 1))" ] && [ "$carta" -ne 1 ]) ||
+            ([ "$carta" -le 20 ] && [ "$carta" -eq "$((maxMesaCopas + 1))" ] && [ "$carta" -ge 11 ]) ||
+            ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((minMesaEspadas - 1))" ]) ||
+            ([ "$carta" -le 30 ] && [ "$carta" -eq "$((maxMesaEspadas + 1))" ] && [ "$carta" -ge 21 ]) ||
+            ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((minMesaBastos - 1))" ]) ||
+            ([ "$carta" -eq "$((maxMesaBastos + 1))" ] && [ "$carta" -ge 31 ]) || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
         ); then
             posibilidad=true
 
@@ -583,13 +526,13 @@ jugarManual() {
                 carta="${cartasNumeros[$i]}"
                 if [ "$carta" -eq "$numero" ]; then
                     if (
-                        [ "$carta" -eq "$((min_mesaOros - 1))" ] || [ "$carta" -eq "$((max_mesaOros + 1))" ] ||
-                        ([ "$carta" -ge 11 ] && [ "$carta" -eq "$((min_mesaCopas - 1))" ] && [ "$carta" -ne 1 ]) ||
-                        ([ "$carta" -le 20 ] && [ "$carta" -eq "$((max_mesaCopas + 1))" ] && [ "$carta" -ge 11 ]) ||
-                        ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((min_mesaEspadas - 1))" ]) ||
-                        ([ "$carta" -le 30 ] && [ "$carta" -eq "$((max_mesaEspadas + 1))" ] && [ "$carta" -ge 21 ]) ||
-                        ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((min_mesaBastos - 1))" ]) ||
-                        ([ "$carta" -eq "$((max_mesaBastos + 1))" ] && [ "$carta" -ge 31 ]) || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
+                        [ "$carta" -eq "$((minMesaOros - 1))" ] || [ "$carta" -eq "$((maxMesaOros + 1))" ] ||
+                        ([ "$carta" -ge 11 ] && [ "$carta" -eq "$((minMesaCopa - 1))" ] && [ "$carta" -ne 1 ]) ||
+                        ([ "$carta" -le 20 ] && [ "$carta" -eq "$((maxMesaCopas + 1))" ] && [ "$carta" -ge 11 ]) ||
+                        ([ "$carta" -ge 21 ] && [ "$carta" -eq "$((minMesaEspadas - 1))" ]) ||
+                        ([ "$carta" -le 30 ] && [ "$carta" -eq "$((maxMesaEspadas + 1))" ] && [ "$carta" -ge 21 ]) ||
+                        ([ "$carta" -ge 31 ] && [ "$carta" -eq "$((minMesaBastos - 1))" ]) ||
+                        ([ "$carta" -eq "$((maxMesaBastos + 1))" ] && [ "$carta" -ge 31 ]) || [ "$carta" -eq 15 ] || [ "$carta" -eq 25 ] || [ "$carta" -eq 35 ] || [ "$carta" -eq 5 ]
                     ); then
                         numeroEliminar="$carta"
                         cartaValida=true
@@ -616,7 +559,6 @@ estrategia0() {
         carta="${cartasNumeros[$i]}"
 
         if [ "$carta" -eq 15 ]; then
-            
             numeroEliminar="$carta"
             cartaValida=true
             return
@@ -634,26 +576,26 @@ estrategia0() {
             return
         fi
 
-        if ([ "$carta" -le 10 ] && [ "$carta" -eq "$((max_mesaOros + 1))" ]) || [ "$carta" -eq "$((min_mesaOros - 1))" ]; then
+        if ([ "$carta" -le 10 ] && [ "$carta" -eq "$((maxMesaOros + 1))" ]) || [ "$carta" -eq "$((minMesaOros - 1))" ]; then
             numeroEliminar="$carta"
             cartaValida=true
             return
         fi
-        if [ "$carta" -eq "$((min_mesaCopas - 1))" ] || [ "$carta" -eq "$((max_mesaCopas + 1))" ]; then
+        if [ "$carta" -eq "$((minMesaCopa - 1))" ] || [ "$carta" -eq "$((maxMesaCopas + 1))" ]; then
             if [ "$carta" -ge 11 ] && [ "$carta" -le 20 ]; then
                 numeroEliminar="$carta"
                 cartaValida=true
                 return
             fi
         fi
-        if [ "$carta" -eq "$((min_mesaEspadas - 1))" ] || [ "$carta" -eq "$((max_mesaEspadas + 1))" ]; then
+        if [ "$carta" -eq "$((minMesaEspadas - 1))" ] || [ "$carta" -eq "$((maxMesaEspadas + 1))" ]; then
             if [ "$carta" -ge 21 ] && [ "$carta" -le 30 ]; then
                 numeroEliminar="$carta"
                 cartaValida=true
                 return
             fi
         fi
-        if [ "$carta" -eq "$((min_mesaBastos - 1))" ] || [ "$carta" -eq "$((max_mesaBastos + 1))" ]; then
+        if [ "$carta" -eq "$((minMesaBastos - 1))" ] || [ "$carta" -eq "$((maxMesaBastos + 1))" ]; then
             if [ "$carta" -ge 31 ] && [ "$carta" -le 40 ]; then
                 numeroEliminar="$carta"
                 cartaValida=true
@@ -668,26 +610,26 @@ estrategia1() {
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
         carta="${cartasNumeros[$i]}"
 
-        if ([ "$carta" -le 10 ] && [ "$carta" -eq "$((max_mesaOros + 1))" ]) || [ "$carta" -eq "$((min_mesaOros - 1))" ]; then
+        if ([ "$carta" -le 10 ] && [ "$carta" -eq "$((maxMesaOros + 1))" ]) || [ "$carta" -eq "$((minMesaOros - 1))" ]; then
             numeroEliminar="$carta"
             cartaValida=true
             return
         fi
-        if [ "$carta" -eq "$((min_mesaCopas - 1))" ] || [ "$carta" -eq "$((max_mesaCopas + 1))" ]; then
+        if [ "$carta" -eq "$((minMesaCopa - 1))" ] || [ "$carta" -eq "$((maxMesaCopas + 1))" ]; then
             if [ "$carta" -ge 11 ] && [ "$carta" -le 20 ]; then
                 numeroEliminar="$carta"
                 cartaValida=true
                 return
             fi
         fi
-        if [ "$carta" -eq "$((min_mesaEspadas - 1))" ] || [ "$carta" -eq "$((max_mesaEspadas + 1))" ]; then
+        if [ "$carta" -eq "$((minMesaEspadas - 1))" ] || [ "$carta" -eq "$((maxMesaEspadas + 1))" ]; then
             if [ "$carta" -ge 21 ] && [ "$carta" -le 30 ]; then
                 numeroEliminar="$carta"
                 cartaValida=true
                 return
             fi
         fi
-        if [ "$carta" -eq "$((min_mesaBastos - 1))" ] || [ "$carta" -eq "$((max_mesaBastos + 1))" ]; then
+        if [ "$carta" -eq "$((minMesaBastos - 1))" ] || [ "$carta" -eq "$((maxMesaBastos + 1))" ]; then
             if [ "$carta" -ge 31 ] && [ "$carta" -le 40 ]; then
                 numeroEliminar="$carta"
                 cartaValida=true
@@ -700,7 +642,6 @@ estrategia1() {
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
         carta="${cartasNumeros[$i]}"
         if [ "$carta" -eq 15 ]; then
-            
             numeroEliminar="$carta"
             cartaValida=true
             return
@@ -777,7 +718,7 @@ calcularNumeroCartas() {
         paloMayor="Espadas"
     fi
     if [ "$numBastos" -gt "$numOros" ] && [ "$numBastos" -gt "$numCopas" ] && [ "$numBastos" -gt "$numEspadas" ]; then
-        paloMayor="Bastos"
+        paloMayor="Bastos"cartaValida
     fi
 }
 
@@ -789,7 +730,6 @@ estrategia2() {
         carta="${cartasNumeros[$i]}"
 
         if [ "$carta" -eq 15 ] && ([ "$maxDistanciaCopas" -eq 4 ] || [ "$maxDistanciaCopas" -eq 5 ]); then
-            
             numeroEliminar="$carta"
             cartaValida=true
             return
@@ -825,26 +765,26 @@ estrategia2() {
             return
         fi
 
-        if ([ "$carta" -le 10 ] && [ "$carta" -eq "$((max_mesaOros + 1))" ]) || [ "$carta" -eq "$((min_mesaOros - 1))" ]; then
+        if ([ "$carta" -le 10 ] && [ "$carta" -eq "$((maxMesaOros + 1))" ]) || [ "$carta" -eq "$((minMesaOros - 1))" ]; then
             numeroEliminar="$carta"
             cartaValida=true
             return
         fi
-        if [ "$carta" -eq "$((min_mesaCopas - 1))" ] || [ "$carta" -eq "$((max_mesaCopas + 1))" ]; then
+        if [ "$carta" -eq "$((minMesaCopa - 1))" ] || [ "$carta" -eq "$((maxMesaCopas + 1))" ]; then
             if [ "$carta" -ge 11 ] && [ "$carta" -le 20 ]; then
                 numeroEliminar="$carta"
                 cartaValida=true
                 return
             fi
         fi
-        if [ "$carta" -eq "$((min_mesaEspadas - 1))" ] || [ "$carta" -eq "$((max_mesaEspadas + 1))" ]; then
+        if [ "$carta" -eq "$((minMesaEspadas - 1))" ] || [ "$carta" -eq "$((maxMesaEspadas + 1))" ]; then
             if [ "$carta" -ge 21 ] && [ "$carta" -le 30 ]; then
                 numeroEliminar="$carta"
                 cartaValida=true
                 return
             fi
         fi
-        if [ "$carta" -eq "$((min_mesaBastos - 1))" ] || [ "$carta" -eq "$((max_mesaBastos + 1))" ]; then
+        if [ "$carta" -eq "$((minMesaBastos - 1))" ] || [ "$carta" -eq "$((maxMesaBastos + 1))" ]; then
             if [ "$carta" -ge 31 ] && [ "$carta" -le 40 ]; then
                 numeroEliminar="$carta"
                 cartaValida=true
@@ -856,7 +796,6 @@ estrategia2() {
     for ((i = 0; i < ${#cartasNumeros[@]}; i++)); do
         carta="${cartasNumeros[$i]}"
         if [ "$carta" -eq 15 ]; then
-            
             numeroEliminar="$carta"
             cartaValida=true
             return
@@ -880,29 +819,35 @@ play() {
  
     if test -f "config.cfg"; then
         if test -r "config.cfg"; then
-            lineaJugadores=$(grep "JUGADORES=" "config.cfg")
-            if [ -z "$lineaJugadores" ]; then
-                echo "ERROR: La variable JUGADORES no está definida en el archivo config.cfg"
-                read -p "Pulse INTRO para continuar..."
-                return
-            fi
+            if test -x "config.cfg"; then
+                lineaJugadores=$(grep "JUGADORES=" "config.cfg")
+                if [ -z "$lineaJugadores" ]; then
+                    echo "ERROR: La variable JUGADORES no está definida en el archivo config.cfg"
+                    read -p "Pulse INTRO para continuar..."
+                    return
+                fi
 
-            numJugadores=$(echo "$lineaJugadores" | cut -d'=' -f2)
+                numJugadores=$(echo "$lineaJugadores" | cut -d'=' -f2)
 
-            if ! [[ $numJugadores =~ ^[2-4]$ ]]; then
-                echo "ERROR: El número de jugadores debe de ser 2, 3 o 4."
-                read -p "Pulse INTRO para continuar..."
-                return
-            fi
+                if ! [[ $numJugadores =~ ^[2-4]$ ]]; then
+                    echo "ERROR: El número de jugadores debe de ser 2, 3 o 4."
+                    read -p "Pulse INTRO para continuar..."
+                    return
+                fi
 
-            lineaEstrategia=$(grep "ESTRATEGIA=" "config.cfg")
-            if [ -z "$lineaEstrategia" ]; then
-                echo "ERROR: La variable ESTRATEGIA no está definida en el archivo config.cfg"
+                lineaEstrategia=$(grep "ESTRATEGIA=" "config.cfg")
+                if [ -z "$lineaEstrategia" ]; then
+                    echo "ERROR: La variable ESTRATEGIA no está definida en el archivo config.cfg"
+                else
+                    estrategia=$(echo "$lineaEstrategia" | cut -d'=' -f2)
+                fi
             else
-                estrategia=$(echo "$lineaEstrategia" | cut -d'=' -f2)
+                echo "ERROR: No tienes permisos de ejecución para el archivo config.cfg."
+                read -p "Pulse INTRO para salir..."
+                exit
             fi
         else
-            echo "ERROR: No se puede leer el archivo config.cfg."
+            echo "ERROR: No puedes leer el archivo config.cfg."
             read -p "Pulse INTRO para salir..."
             exit
         fi
@@ -912,7 +857,8 @@ play() {
         exit
     fi
 
-    tiempoInicial=$SECONDS
+
+    TIEMPO_INICIAL=$SECONDS
 
     echo "Comenzando una partida de 5illo con $numJugadores jugadores..."
     repartirCartas
@@ -945,17 +891,18 @@ decodificarCarta() {
 }
 
 maxminmesas() {
-    min_mesaOros=$(encontrarMinimo ${mesaOros[@]})
-    max_mesaOros=$(encontrarMaximo ${mesaOros[@]})
+    
+    minMesaOros=$(find_min ${mesaOros[@]})
+    maxMesaOros=$(find_max ${mesaOros[@]})
 
-    min_mesaCopas=$(encontrarMinimo ${mesaCopas[@]})
-    max_mesaCopas=$(encontrarMaximo ${mesaCopas[@]})
+    minMesaCopa=$(find_min ${mesaCopas[@]})
+    maxMesaCopas=$(find_max ${mesaCopas[@]})
 
-    min_mesaEspadas=$(encontrarMinimo ${mesaEspadas[@]})
-    max_mesaEspadas=$(encontrarMaximo ${mesaEspadas[@]})
+    minMesaEspadas=$(find_min ${mesaEspadas[@]})
+    maxMesaEspadas=$(find_max ${mesaEspadas[@]})
 
-    min_mesaBastos=$(encontrarMinimo ${mesaBastos[@]})
-    max_mesaBastos=$(encontrarMaximo ${mesaBastos[@]})
+    minMesaBastos=$(find_min ${mesaBastos[@]})
+    maxMesaBastos=$(find_max ${mesaBastos[@]})
 }
 
 sumarPuntos() {
@@ -1011,6 +958,49 @@ imprimirPuestos() {
     done
 }
 
+cargarDatosPartidaEnFicherolog() {
+    fechaActual=$(date +"%d/%m/%y")
+    horaActual=$(date +"%H:%M")
+
+    cartasRestantes=""
+
+    for ((i = 0; i < 4; i++)); do
+        cartasJugador=${cartasJugadores[$i]}
+        IFS=' ' read -ra cartasArray <<<"$cartasJugador"
+
+        numCartas=${#cartasArray[@]}
+
+        if [ $i -lt $numJugadores ]; then
+            if [ $numCartas -eq 0 ]; then
+                cartasRestantes+="0"
+            else
+                cartasRestantes+="$numCartas"
+            fi
+        else
+            cartasRestantes+="*"
+        fi
+        if [ $i -lt 3 ]; then
+            cartasRestantes+="-"
+        fi
+    done
+
+    leerFicheroLog
+
+    if test -f "$ficheroLog"; then
+        if test -x "$ficheroLog"; then
+            if test -w "$ficheroLog"; then
+                echo -e "$fechaActual|$horaActual|$numJugadores|$elapsed_time|$rondas|$jugadorTurno|$puntosGanador|$cartasRestantes" >> "$ficheroLog"
+            else
+                echo "ERROR: No se puede escribir en el archivo de log $ficheroLog."
+            fi
+        else
+            echo "ERROR: No tienes permisos de ejecución para el archivo de log $ficheroLog."
+        fi
+    else
+        echo "ERROR: El archivo de log $ficheroLog no existe."
+    fi
+
+}
 
 calculateStatistics() {
 
@@ -1022,11 +1012,14 @@ calculateStatistics() {
     partidasGanadas3=0
     partidasGanadas4=0
 
+    # Leer el fichero de log línea por línea
     while IFS='|' read -r fecha hora jugadores tiempo rondas ganador puntos cartas; do
+        # Calcular estadísticas
         totalPartidas=$((totalPartidas + 1))
         totalTiempo=$(bc -l <<<"$totalTiempo + $tiempo")
         totalPuntos=$(bc -l <<<"$totalPuntos + $puntos")
 
+        # Verificar el jugador ganador y contar las partidas ganadas por cada jugador
         case "$ganador" in
         1)
             partidasGanadas1=$((partidasGanadas1 + 1))
@@ -1041,96 +1034,108 @@ calculateStatistics() {
             partidasGanadas4=$((partidasGanadas4 + 1))
             ;;
         esac
-    done <"$1"
+    done <"$1" # $1 es el nombre del fichero de log pasado como argumento
 
+    # Calcular medias y porcentajes
     mediaTiempo=$(bc -l <<<"$totalTiempo / $totalPartidas")
     mediaPuntos=$(bc -l <<<"$totalPuntos / $totalPartidas")
-    porcentajeGanadas1=$(bc -l <<<"($partidasGanadas1 / $totalPartidas) * 100")
-    porcentajeGanadas2=$(bc -l <<<"($partidasGanadas2 / $totalPartidas) * 100")
-    porcentajeGanadas3=$(bc -l <<<"($partidasGanadas3 / $totalPartidas) * 100")
-    porcentajeGanadas4=$(bc -l <<<"($partidasGanadas4 / $totalPartidas) * 100")
+    porcentajeWin1=$(bc -l <<<"($partidasGanadas1 / $totalPartidas) * 100")
+    porcentajeWin2=$(bc -l <<<"($partidasGanadas2 / $totalPartidas) * 100")
+    porcentajeWin3=$(bc -l <<<"($partidasGanadas3 / $totalPartidas) * 100")
+    porcentajeWin4=$(bc -l <<<"($partidasGanadas4 / $totalPartidas) * 100")
 
+    # Mostrar estadísticas
     echo "Número total de partidas jugadas: $totalPartidas"
     echo "Media de los tiempos de todas las partidas jugadas: $mediaTiempo"
     echo "Tiempo total invertido en todas las partidas: $totalTiempo"
     echo "Media de los puntos obtenidos por el ganador en todas las partidas: $mediaPuntos"
-    echo "Porcentaje de partidas ganadas del jugador 1: $porcentajeGanadas1%"
-    echo "Porcentaje de partidas ganadas del jugador 2: $porcentajeGanadas2%"
-    echo "Porcentaje de partidas ganadas del jugador 3: $porcentajeGanadas3%"
-    echo "Porcentaje de partidas ganadas del jugador 4: $porcentajeGanadas4%"
+    echo "Porcentaje de partidas ganadas del jugador 1: $porcentajeWin1%"
+    echo "Porcentaje de partidas ganadas del jugador 2: $porcentajeWin2%"
+    echo "Porcentaje de partidas ganadas del jugador 3: $porcentajeWin3%"
+    echo "Porcentaje de partidas ganadas del jugador 4: $porcentajeWin4%"
 }
 
 calculateLeaderboard() {
+    # Variables para almacenar los datos de las partidas destacadas
     partidaMasCorta=""
     partidaMasLarga=""
     partidaMasRondas=""
-    partidaMenosRondas=""
+    PartidaMenosRondas=""
     partidaMasPuntos=""
     partidaMasCartas=""
 
-    duracionMinima=9999999
-    duracionMaxima=0
+    # Inicializar variables para comparaciones
+    duracionCorta=9999999
+    duracionLarga=0
     maxRondas=0
     minRondas=9999999
-    maxPuntos=0
+    maxPoints=0
     maxCartas=0
 
     while IFS='|' read -r fecha hora jugadores tiempo rondas ganador puntos cartas; do
+        # Comprobar si los valores son números enteros válidos
         if [[ "$tiempo" =~ ^[0-9]+$ ]]; then
-            tiempoEntero=$tiempo
+            tiempoInt=$tiempo
         else
-            tiempoEntero=0
+            tiempoInt=0
         fi
 
         if [[ "$rondas" =~ ^[0-9]+$ ]]; then
-            rondasEntero=$rondas
+            rondasInt=$rondas
         else
-            rondasEntero=0
+            rondasInt=0
         fi
 
         if [[ "$puntos" =~ ^[0-9]+$ ]]; then
-            puntosEntero=$puntos
+            puntosInt=$puntos
         else
-            puntosEntero=0
+            puntosInt=0
         fi
 
+        # Procesar cartas
         cartasMax=0
-        IFS="-" read -ra jugadoresCartas <<<"$cartas"
-        for jugadorCartas in "${jugadoresCartas[@]}"; do
-            if [[ "$jugadorCartas" != "*" && "$jugadorCartas" -gt cartasMax ]]; then
-                cartasMax="$jugadorCartas"
+        IFS="-" read -ra jugadores_cartas <<<"$cartas"
+        #imprime "${jugadores_cartas[@]}"
+        for cartasJugador in "${jugadores_cartas[@]}"; do
+            if [[ "$cartasJugador" != "*" && "$cartasJugador" -gt cartasMax ]]; then
+                cartasMax="$cartasJugador"
             fi
         done
 
-        if [ "$tiempoEntero" -lt "$duracionMinima" ]; then
-            duracionMinima="$tiempoEntero"
+        # Comprobar duración de la partida
+        if [ "$tiempoInt" -lt "$duracionCorta" ]; then
+            duracionCorta="$tiempoInt"
             partidaMasCorta="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
         fi
-        if [ "$tiempoEntero" -gt "$duracionMaxima" ]; then
-            duracionMaxima="$tiempoEntero"
+        if [ "$tiempoInt" -gt "$duracionLarga" ]; then
+            duracionLarga="$tiempoInt"
             partidaMasLarga="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
         fi
 
-        if [ "$rondasEntero" -gt "$maxRondas" ]; then
-            maxRondas="$rondasEntero"
+        # Comprobar número de rondas
+        if [ "$rondasInt" -gt "$maxRondas" ]; then
+            maxRondas="$rondasInt"
             partidaMasRondas="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
         fi
-        if [ "$rondasEntero" -lt "$minRondas" ]; then
-            minRondas="$rondasEntero"
-            partidaMenosRondas="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
+        if [ "$rondasInt" -lt "$minRondas" ]; then
+            minRondas="$rondasInt"
+            PartidaMenosRondas="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
         fi
 
-        if [ "$puntosEntero" -gt "$maxPuntos" ]; then
-            maxPuntos="$puntosEntero"
+        # Comprobar número de puntos
+        if [ "$puntosInt" -gt "$maxPoints" ]; then
+            maxPoints="$puntosInt"
             partidaMasPuntos="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
         fi
 
+        # Comprobar número de cartas
         if [ "$cartasMax" -gt "$maxCartas" ]; then
             maxCartas="$cartasMax"
             partidaMasCartas="$fecha|$hora|$jugadores|$tiempo|$rondas|$ganador|$puntos|$cartas"
         fi
-    done <"$1"
+    done <"$1" # $1 es el nombre del fichero de log pasado como argumento
 
+    # Mostrar los datos de las partidas destacadas
     echo "Partida más corta:"
     echo "$partidaMasCorta"
     echo ""
@@ -1141,7 +1146,7 @@ calculateLeaderboard() {
     echo "$partidaMasRondas"
     echo ""
     echo "Partida con menos rondas:"
-    echo "$partidaMenosRondas"
+    echo "$PartidaMenosRondas"
     echo ""
     echo "Partida con más puntos obtenidos por el ganador:"
     echo "$partidaMasPuntos"
@@ -1180,7 +1185,6 @@ EOF
     read -p "Pulse INTRO para continuar..."
 }
 
-# Bucle principal
 while true; do
     comprobarArgumentos "$*"
     showMenu
@@ -1204,7 +1208,7 @@ while true; do
         showLeaderboard
         ;;
     S | s)
-        echo "Saliendo del juego..."
+        echo "Saliendo del juego. ¡Hasta luego!"
         exit
         ;;
     *)
