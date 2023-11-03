@@ -1,1 +1,0 @@
-# SSOO1-BashProject
